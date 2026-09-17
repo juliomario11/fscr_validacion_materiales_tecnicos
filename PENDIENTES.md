@@ -22,6 +22,19 @@ recién arrancado) — cuando crezca, adoptar el mismo estilo de
   endpoint para descargar o previsualizar un adjunto ya subido; el frontend
   solo muestra nombre de archivo + fecha.
 
+## Operación — despliegue en el servidor Ubuntu
+
+- **Vhost de Apache2 para el puerto 8082**: pendiente de crear en el
+  servidor `factproveedores` (fuera de este repo, Apache no se versiona
+  aquí). Debe redirigir hacia `127.0.0.1:8082`, igual en espíritu al vhost
+  que ya existe para `fscr_proveedores_factura` en el 9100 (mismo servidor).
+  Lo aplica el usuario directamente (o vía su propio tooling de servidor),
+  no este repo.
+- **`pm2 startup`**: confirmar si ya está configurado en el servidor para
+  que los procesos pm2 sobrevivan un reinicio (`fscr-api` de
+  `fscr_proveedores_factura` puede ya tenerlo) y replicarlo para
+  `fscr-validacion-materiales-api` si hace falta.
+
 ## Seguridad / operación
 
 - El archivo `Personal_Completo.xlsx` que apareció en la raíz del repo

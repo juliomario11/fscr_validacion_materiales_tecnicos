@@ -49,6 +49,25 @@ hermano). La whitelist en `empleados_encuesta` viene directo del negocio.
   que ejercite el signing real bajo Jest (Jest en CJS no soporta `import()`
   dinámico sin `--experimental-vm-modules`).
 
+## Despliegue real (no confundir con `.do/app.yaml`)
+
+El método de despliegue real es un servidor Ubuntu propio llamado
+`factproveedores` (Tailscale, `100.74.71.100`), el mismo donde ya corre
+`fscr_proveedores_factura` en el puerto 9100 — vía pm2 (`ecosystem.config.js`)
+y `deploy.sh`, con Apache2 como proxy inverso (configuración de Apache no
+versionada aquí, vive solo en `/etc/apache2` del servidor). Este proyecto
+usa el puerto 8082. `.do/app.yaml` (DigitalOcean App Platform) es una
+alternativa que se dejó preparada pero que **no** es el despliegue real
+usado hoy — no asumas que un push a `main` se despliega solo; el deploy en
+el servidor Ubuntu es manual (`./deploy.sh`), decisión explícita del dueño
+del proyecto, igual que en el repo hermano.
+
+Este agente no tiene acceso SSH al servidor desde el entorno de desarrollo
+(sin clave/agente configurado) — cualquier cambio en `/etc/apache2` o
+reinicio de pm2 en el servidor real lo ejecuta el usuario directamente o
+vía `deploy.sh`, nunca asumas que puedes conectarte tú mismo sin que el
+usuario lo confirme explícitamente.
+
 ## Archivo excluido a propósito
 
 `Personal_Completo.xlsx` apareció en la raíz del repo local durante el

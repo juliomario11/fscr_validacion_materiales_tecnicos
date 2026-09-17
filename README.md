@@ -27,8 +27,14 @@ apps/
 - **Base de datos:** Supabase Postgres, schema `validacion_materiales_tecnicos`
   (proyecto compartido con otros dominios FSCR — `equipos_fscr`,
   `proveedores_fscr`, etc. — sin relación entre sí).
-- **Despliegue:** DigitalOcean App Platform, un solo servicio Node sobre
-  Ubuntu (`.do/app.yaml`), igual que `fscr_proveedores_factura`.
+- **Despliegue real:** servidor Ubuntu propio `factproveedores` (accesible
+  vía Tailscale, `100.74.71.100`) — el mismo donde ya corre
+  `fscr_proveedores_factura` en el puerto 9100. Este proyecto corre en el
+  **puerto 8082**, su propio proceso pm2 (`ecosystem.config.js`) y su propio
+  vhost de Apache2 (reverse proxy, configurado a mano en el servidor — no
+  versionado en este repo). `.do/app.yaml` queda como alternativa de
+  despliegue en DigitalOcean App Platform si algún día se necesita, pero
+  **no** es el método usado hoy.
 
 ## Autenticación
 
@@ -70,6 +76,30 @@ npm --prefix apps/api run start:prod
 npm --prefix apps/web-angular install
 npm --prefix apps/web-angular start
 ```
+
+## Deploy en el servidor Ubuntu (producción real)
+
+```bash
+# En el servidor factproveedores (vía Tailscale), primera vez:
+git clone https://github.com/juliomario11/fscr_validacion_materiales_tecnicos.git
+cd fscr_validacion_materiales_tecnicos
+cp apps/api/.env.example apps/api/.env   # completar Supabase real + SESSION_SECRET + FSCR_API_PORT=8082 + FSCR_SERVE_STATIC=true
+npm install -g pm2   # si no está ya instalado (fscr_proveedores_factura ya lo instaló)
+chmod +x deploy.sh
+
+# Cada deploy:
+./deploy.sh
+```
+
+`deploy.sh` compila ambos apps y reinicia el proceso pm2
+`fscr-validacion-materiales-api` (mismo patrón que
+`fscr_proveedores_factura/deploy.sh`, que maneja el proceso `fscr-api` en el
+mismo servidor). Falta configurar en el servidor (fuera de este repo,
+manual, vía Apache2 — ver `PENDIENTES.md`):
+
+- Un vhost/bloque de proxy inverso que redirija hacia `127.0.0.1:8082`.
+- `pm2 startup` + `pm2 save` si el proceso no está ya sobreviviendo reinicios
+  del servidor (revisar si ya se hizo para `fscr-api` y replicar).
 
 ## Validación (pre-commit / pre-PR)
 
