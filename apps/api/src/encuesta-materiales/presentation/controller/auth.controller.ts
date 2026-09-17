@@ -10,15 +10,24 @@ import { LoginUseCase } from '../../application/use-case/login.use-case';
 const SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
 
 function buildCookieOptions(): CookieOptions {
-  const isProduction = process.env.NODE_ENV === 'production';
+  // OJO: esto NO debe depender de NODE_ENV. El servidor real de producción
+  // (factproveedores, puerto 8082 vía Apache) sirve todo por HTTP plano, sin
+  // TLS -- si aqui se pusiera secure=true por estar en NODE_ENV=production,
+  // el navegador descarta la cookie silenciosamente (Secure exige HTTPS
+  // real) y cualquier request despues del login responde 401 "sesion no
+  // encontrada", aunque el login mismo haya funcionado. Usa FSCR_COOKIE_SECURE
+  // explicito, solo cuando de verdad haya HTTPS termination delante (ej. un
+  // futuro dominio con certificado real, o DigitalOcean App Platform).
+  const cookieSecure = process.env.FSCR_COOKIE_SECURE === 'true';
   return {
     httpOnly: true,
-    secure: isProduction,
+    secure: cookieSecure,
     // 'none' es obligatorio para que el navegador envíe la cookie en
-    // llamadas cross-site (Angular en un origen distinto a esta API) sobre
-    // HTTPS; en desarrollo local ('http://localhost') 'lax' basta y evita
-    // tener que servir todo por HTTPS solo para probar el login.
-    sameSite: isProduction ? 'none' : 'lax',
+    // llamadas cross-site sobre HTTPS real (y requiere secure=true, si no el
+    // navegador la descarta). 'lax' basta cuando frontend y API comparten el
+    // mismo origen (como en este servidor, vía el ProxyPass de Apache) o en
+    // desarrollo local, y funciona tanto en HTTP como HTTPS.
+    sameSite: cookieSecure ? 'none' : 'lax',
     maxAge: SESSION_MAX_AGE_MS,
     path: '/',
   };
@@ -48,7 +57,10 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   public logout(@Res({ passthrough: true }) response: Response): { ok: true } {
-    response.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
+    // clearCookie debe recibir las MISMAS opciones (sameSite/secure/path) con
+    // las que se seteo, si no algunos navegadores no la reconocen como la
+    // misma cookie y no la borran.
+    response.clearCookie(SESSION_COOKIE_NAME, buildCookieOptions());
     return { ok: true };
   }
 }

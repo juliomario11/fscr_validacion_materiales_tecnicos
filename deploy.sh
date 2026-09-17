@@ -44,7 +44,12 @@ if ! command -v pm2 >/dev/null 2>&1; then
 fi
 
 echo "== 5/8 Reiniciando proceso pm2 (fscr-validacion-materiales-api) =="
-pm2 startOrRestart ecosystem.config.js
+# pm2 delete + start (no startOrRestart/reload): si el .env cambia,
+# startOrRestart reutiliza el env con el que el proceso se creo la primera
+# vez y NO relee env_file -- solo un start limpio garantiza que tome el
+# .env actual. Silenciar el error si el proceso no existia aun.
+pm2 delete fscr-validacion-materiales-api >/dev/null 2>&1 || true
+pm2 start ecosystem.config.js
 pm2 save
 
 echo "== 6/8 Asegurando que Apache escuche en el puerto $PUBLIC_PORT =="
