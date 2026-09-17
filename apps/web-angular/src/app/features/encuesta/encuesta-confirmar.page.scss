@@ -1,0 +1,23 @@
+.confirmar {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: grid;
+  gap: 18px;
+}
+
+.confirmar__header {
+  display: grid;
+  gap: 12px;
+}
+
+.confirmar__header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.confirmar__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

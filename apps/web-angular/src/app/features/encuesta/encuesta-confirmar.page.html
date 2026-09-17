@@ -1,0 +1,50 @@
+<main class="confirmar">
+  <header class="confirmar__header">
+    <h1>Revisa tu selección</h1>
+    <p class="alert alert--warning" role="alert">
+      Revisa tu selección. Una vez confirmes el envío no podrás modificar estas respuestas.
+    </p>
+  </header>
+
+  @if (errorCarga()) {
+    <p class="alert alert--danger" role="alert">{{ errorCarga() }}</p>
+  }
+
+  @if (cargando()) {
+    <p>Cargando tu selección...</p>
+  } @else {
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th>Cantidad</th>
+          <th>Observaciones</th>
+          <th>Adjuntos</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (respuesta of respuestasService.borrador(); track respuesta.materialId) {
+          <tr>
+            <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+            <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+            <td>{{ respuesta.observaciones || '—' }}</td>
+            <td>{{ respuesta.adjuntos?.length ? respuesta.adjuntos!.length : 0 }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (errorConfirmar()) {
+      <p class="alert alert--danger" role="alert">{{ errorConfirmar() }}</p>
+    }
+
+    <div class="confirmar__acciones">
+      <button class="btn btn--ghost" type="button" [disabled]="confirmando()" (click)="volverAEditar()">
+        Volver a editar
+      </button>
+      <button class="btn btn--primary" type="button" [disabled]="confirmando()" (click)="confirmarEnvio()">
+        {{ confirmando() ? 'Enviando...' : 'Confirmar y enviar' }}
+      </button>
+    </div>
+  }
+</main>

@@ -1,0 +1,32 @@
+<main class="login">
+  <section class="login__card card">
+    <header class="login__intro">
+      <h1>Validación de materiales técnicos</h1>
+      <p>Ingresa tu número de cédula para responder la encuesta de materiales/herramientas que tienes en tu poder.</p>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="field">
+        <span>Número de cédula</span>
+        <input
+          type="text"
+          inputmode="numeric"
+          formControlName="cedula"
+          autocomplete="off"
+          placeholder="Ej. 1020304050"
+        />
+        @if (form.controls.cedula.touched && form.controls.cedula.hasError('required')) {
+          <small>La cédula es obligatoria.</small>
+        }
+      </label>
+
+      @if (errorMessage()) {
+        <p class="alert alert--danger" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button class="btn btn--primary login__submit" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Validando...' : 'Ingresar' }}
+      </button>
+    </form>
+  </section>
+</main>

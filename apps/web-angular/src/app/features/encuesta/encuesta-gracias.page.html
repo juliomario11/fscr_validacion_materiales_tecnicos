@@ -1,0 +1,35 @@
+<main class="gracias">
+  <section class="card gracias__card">
+    <h1>¡Gracias por responder la encuesta!</h1>
+    @if (auth.user(); as usuario) {
+      <p>{{ usuario.nombre }}, tu respuesta quedó registrada correctamente.</p>
+    } @else {
+      <p>Tu respuesta quedó registrada correctamente.</p>
+    }
+
+    @if (cargando()) {
+      <p>Cargando resumen final...</p>
+    } @else if (respuestasService.confirmadas().length === 0) {
+      <p>No encontramos el detalle de tu envío, pero tu confirmación fue recibida.</p>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Cantidad</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (respuesta of respuestasService.confirmadas(); track respuesta.materialId) {
+            <tr>
+              <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+              <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+              <td>{{ respuesta.observaciones || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</main>

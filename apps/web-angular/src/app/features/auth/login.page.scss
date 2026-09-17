@@ -1,0 +1,40 @@
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: radial-gradient(circle at 18% 18%, rgba(0, 105, 255, 0.18), transparent 30%), var(--main-bg);
+}
+
+.login__card {
+  display: grid;
+  gap: 20px;
+  width: min(100%, 420px);
+}
+
+.login__intro {
+  display: grid;
+  gap: 6px;
+}
+
+.login__intro h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.login__intro p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+.login__submit {
+  width: 100%;
+  justify-content: center;
+  min-height: 44px;
+}

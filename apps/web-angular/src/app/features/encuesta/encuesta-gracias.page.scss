@@ -1,0 +1,24 @@
+.gracias {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+.gracias__card {
+  width: 100%;
+  display: grid;
+  gap: 14px;
+  text-align: center;
+}
+
+.gracias__card h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.gracias__card table {
+  text-align: left;
+}

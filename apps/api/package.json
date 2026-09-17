@@ -1,0 +1,42 @@
+{
+  "name": "fscr-validacion-materiales-tecnicos-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API de Validación de Materiales Técnicos (FSCR) — encuesta para que los técnicos de campo declaren los materiales/herramientas que tienen en su poder. NestJS 11 + arquitectura hexagonal + Supabase (schema validacion_materiales_tecnicos, acceso vía PostgREST con service_role).",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "start:prod": "npm run build && node dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "jest --config jest.config.cjs"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/platform-express": "^11.1.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.6.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "dotenv": "^16.1.4",
+    "express": "^4.18.2",
+    "helmet": "^8.1.0",
+    "jose": "6.2.10",
+    "multer": "^2.1.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.19",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^7.2.0",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.9"
+  }
+}

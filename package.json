@@ -1,0 +1,25 @@
+{
+  "name": "fscr-validacion-materiales-tecnicos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Encuesta interna FSCR: los técnicos de campo declaran qué materiales/herramientas tienen en su poder (apps/api NestJS 11 hexagonal + apps/web-angular Angular 21 standalone, Supabase schema validacion_materiales_tecnicos).",
+  "scripts": {
+    "api:install": "npm --prefix apps/api install --no-audit --no-fund",
+    "api:build": "npm --prefix apps/api run build",
+    "api:test": "npm --prefix apps/api test",
+    "api:typecheck": "npm --prefix apps/api run typecheck",
+    "web-angular:install": "npm --prefix apps/web-angular install --no-audit --no-fund",
+    "web-angular:build": "npm --prefix apps/web-angular run build",
+    "web-angular:start": "npm --prefix apps/web-angular start",
+    "web-angular:typecheck": "npm --prefix apps/web-angular run typecheck",
+    "typecheck": "npm run api:typecheck && npm run web-angular:typecheck",
+    "test": "npm run api:test",
+    "build": "npm run api:install && npm run api:build && npm run web-angular:install && npm run web-angular:build",
+    "heroku-postbuild": "npm run build",
+    "start": "node apps/api/dist/main.js",
+    "start:local": "npm --prefix apps/api run start:prod"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

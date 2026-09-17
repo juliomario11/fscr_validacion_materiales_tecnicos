@@ -1,0 +1,177 @@
+<main class="encuesta">
+  <header class="encuesta__header">
+    <div>
+      <h1>Encuesta de materiales y herramientas</h1>
+      @if (auth.user(); as usuario) {
+        <p>Hola, <strong>{{ usuario.nombre }}</strong> (cédula {{ usuario.cedula }})</p>
+      }
+    </div>
+    <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  </header>
+
+  @if (errorCarga()) {
+    <p class="alert alert--danger" role="alert">{{ errorCarga() }}</p>
+  }
+
+  @if (cargando()) {
+    <p>Cargando catálogo de materiales...</p>
+  } @else {
+    <section class="encuesta__grid">
+      <div class="card encuesta__selector">
+        <h2>1. Elige un material o herramienta</h2>
+
+        <label class="field">
+          <span>Buscar por código, descripción o categoría</span>
+          <input
+            type="text"
+            placeholder="Ej. HR00410, guante, categoría..."
+            [ngModel]="filtroTexto()"
+            (ngModelChange)="filtroTexto.set($event)"
+          />
+        </label>
+
+        <div class="encuesta__lista">
+          @for (grupo of gruposFiltrados(); track grupo.categoria) {
+            <div class="encuesta__grupo">
+              <h3>{{ grupo.categoria }}</h3>
+              <ul>
+                @for (material of grupo.materiales; track material.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="encuesta__item"
+                      [class.encuesta__item--activo]="materialSeleccionadoId() === material.id"
+                      (click)="seleccionarMaterial(material)"
+                    >
+                      <span>[{{ material.codigo }}] {{ material.descripcion }}</span>
+                      <span class="encuesta__item-meta">
+                        {{ material.unidadMedida }}
+                        @if (idsEnLista().has(material.id)) {
+                          <span class="badge">En tu lista</span>
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          } @empty {
+            <p>No hay materiales que coincidan con la búsqueda.</p>
+          }
+        </div>
+      </div>
+
+      <div class="card encuesta__detalle">
+        <h2>2. Cantidad que tienes</h2>
+
+        @if (materialSeleccionado(); as material) {
+          <p class="encuesta__material-nombre">[{{ material.codigo }}] {{ material.descripcion }}</p>
+          <p class="encuesta__unidad">Unidad de medida: {{ material.unidadMedida }}</p>
+
+          <label class="field">
+            <span>Cantidad que tienes</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [ngModel]="cantidad()"
+              (ngModelChange)="cantidad.set($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span>Observaciones (opcional)</span>
+            <textarea
+              rows="3"
+              [ngModel]="observaciones()"
+              (ngModelChange)="observaciones.set($event)"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Adjuntar foto/soporte (opcional)</span>
+            <input type="file" accept="image/*,.pdf" (change)="onArchivoSeleccionado($event)" />
+          </label>
+          @if (archivo(); as archivoSeleccionado) {
+            <p class="encuesta__archivo">Archivo seleccionado: {{ archivoSeleccionado.name }}</p>
+          }
+
+          @if (errorGuardado()) {
+            <p class="alert alert--danger" role="alert">{{ errorGuardado() }}</p>
+          }
+
+          <div class="encuesta__acciones-detalle">
+            <button
+              class="btn btn--primary"
+              type="button"
+              [disabled]="!cantidad() || cantidad()! <= 0 || guardando()"
+              (click)="agregarAMiLista()"
+            >
+              {{ guardando() ? 'Guardando...' : 'Agregar a mi lista' }}
+            </button>
+            <button class="btn btn--ghost" type="button" (click)="limpiarSeleccion()">Cancelar</button>
+          </div>
+        } @else {
+          <p>Selecciona un material de la lista para registrar la cantidad que tienes.</p>
+        }
+      </div>
+    </section>
+
+    <section class="card encuesta__mi-lista">
+      <h2>Mi selección actual</h2>
+
+      @if (respuestasService.borrador().length === 0) {
+        <p>Todavía no has agregado ningún material a tu lista.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Cantidad</th>
+              <th>Observaciones</th>
+              <th>Adjunto</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (respuesta of respuestasService.borrador(); track respuesta.materialId) {
+              <tr>
+                <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+                <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+                <td>{{ respuesta.observaciones || '—' }}</td>
+                <td>
+                  @if (respuesta.adjuntos?.length) {
+                    <ul class="encuesta__adjuntos">
+                      @for (adjunto of respuesta.adjuntos; track adjunto.id) {
+                        <li>{{ adjunto.nombreArchivo }} ({{ adjunto.subidoEn | date: 'short' }})</li>
+                      }
+                    </ul>
+                  } @else {
+                    No
+                  }
+                </td>
+                <td class="encuesta__fila-acciones">
+                  <button class="btn btn--ghost" type="button" (click)="editar(respuesta)">Editar</button>
+                  <button
+                    class="btn btn--danger"
+                    type="button"
+                    [disabled]="quitandoId() === respuesta.materialId"
+                    (click)="quitar(respuesta)"
+                  >
+                    Quitar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <div class="encuesta__continuar">
+        <button class="btn btn--primary" type="button" [disabled]="!puedeContinuar()" (click)="continuar()">
+          Continuar
+        </button>
+      </div>
+    </section>
+  }
+</main>

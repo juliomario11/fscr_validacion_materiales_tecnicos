@@ -1,0 +1,86 @@
+# =============================================================================
+# DigitalOcean App Platform — fscr_validacion_materiales_tecnicos
+# -----------------------------------------------------------------------------
+# - Build: el buildpack de Node corre `heroku-postbuild` (raíz) que instala y
+#   compila apps/api (NestJS) y luego instala y compila apps/web-angular.
+#   NPM_CONFIG_PRODUCTION=false en BUILD_TIME es necesario porque el buildpack
+#   fija NODE_ENV=production por defecto, lo que haría que `npm install` omita
+#   las devDependencies (typescript, @angular/cli, etc.) en ambos sub-paquetes.
+# - Run: arranca la API NestJS (`npm start` -> node apps/api/dist/main.js),
+#   que con FSCR_SERVE_STATIC=true sirve también el build de Angular desde el
+#   mismo proceso (un solo servicio) -- ver apps/api/src/main.ts.
+# - Health: endpoint del módulo encuesta-materiales.
+#
+# Antes de desplegar:
+#   1. Actualiza `github.repo`/`branch` si tu fork usa otro nombre.
+#   2. Pon SUPABASE_URL real y rellena los Secrets marcados
+#      REEMPLAZAR_EN_APP_PLATFORM en la UI de App Platform (no se commitean).
+# =============================================================================
+
+name: fscr-validacion-materiales-tecnicos
+region: nyc
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+features:
+  - buildpack-stack=ubuntu-22
+
+services:
+  - name: web
+    environment_slug: node-js
+    github:
+      repo: juliomario11/fscr_validacion_materiales_tecnicos
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    run_command: npm start
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    health_check:
+      http_path: /api/v1/validacion-materiales/health
+      port: 8080
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 5
+    envs:
+      - key: NODE_ENV
+        value: "production"
+        scope: RUN_TIME
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
+        scope: BUILD_TIME
+      - key: PORT
+        value: "8080"
+        scope: RUN_TIME
+      - key: FSCR_API_PORT
+        value: "8080"
+        scope: RUN_TIME
+      - key: FSCR_SERVE_STATIC
+        value: "true"
+        scope: RUN_TIME
+      - key: FSCR_DB_SCHEMA
+        value: "validacion_materiales_tecnicos"
+        scope: RUN_TIME
+      - key: SUPABASE_URL
+        value: "https://<tu-proyecto>.supabase.co"
+        scope: RUN_AND_BUILD_TIME
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: "REEMPLAZAR_EN_APP_PLATFORM"
+        scope: RUN_TIME
+        type: SECRET
+      - key: SESSION_SECRET
+        value: "REEMPLAZAR_EN_APP_PLATFORM"
+        scope: RUN_TIME
+        type: SECRET
+      # Solo relevante para clientes que llamen a la API desde OTRO origen
+      # (ej. pruebas locales con ng serve en :4200). En producción, con
+      # FSCR_SERVE_STATIC=true, el frontend se sirve desde el mismo origen
+      # que la API y esto deja de ser necesario para el flujo normal.
+      - key: ALLOWED_ORIGINS
+        value: "${APP_URL}"
+        scope: RUN_TIME
