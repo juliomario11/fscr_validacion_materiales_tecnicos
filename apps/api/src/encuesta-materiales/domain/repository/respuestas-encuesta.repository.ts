@@ -13,6 +13,8 @@ export interface UpsertRespuestaPayload {
 export interface RespuestasEncuestaRepository {
   /** Todas las respuestas (borrador + confirmado) del empleado, con material y adjuntos embebidos (GET /mis-respuestas). */
   findAllByEmpleadoConDetalle(empleadoId: number): Promise<RespuestaConDetalle[]>;
+  /** Todas las respuestas de TODOS los empleados, con material y adjuntos embebidos -- solo para el panel de administración. */
+  findAllConDetalle(): Promise<RespuestaConDetalle[]>;
   /** `null` si el empleado no tiene fila para ese material -- usado para decidir insert vs. update y para validar dueño+estado antes de borrar/adjuntar. */
   findByEmpleadoYMaterial(empleadoId: number, materialId: number): Promise<RespuestaEncuesta | null>;
   findByIdConDetalle(id: number): Promise<RespuestaConDetalle | null>;

@@ -50,6 +50,14 @@ export class AuthController {
       empleadoId: result.empleadoId,
       cedula: result.cedula,
       nombreCompleto: result.nombreCompleto,
+      nombres: result.nombres,
+      apellidos: result.apellidos,
+      cargo: result.cargo,
+      departamento: result.departamento,
+      area: result.area,
+      proyecto: result.proyecto,
+      celular: result.celular,
+      email: result.email,
     };
   }
 

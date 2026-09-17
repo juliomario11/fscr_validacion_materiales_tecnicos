@@ -80,6 +80,18 @@ reinicio de pm2 en el servidor real lo ejecuta el usuario directamente o
 vía `deploy.sh`, nunca asumas que puedes conectarte tú mismo sin que el
 usuario lo confirme explícitamente.
 
+## Adjuntos: filesystem del servidor, no Supabase Storage
+
+Decisión explícita del usuario (corrigiendo un supuesto inicial equivocado):
+los adjuntos de la encuesta se guardan en el **filesystem del servidor**
+(`DOCUMENTS_STORAGE_PATH`, `/var/lib/fscr/adjuntos_encuesta_tecnicos` en
+producción), con el mismo patrón de seguridad que
+`FilesystemDocumentStorage` de `fscr_proveedores_factura` (nombre de
+archivo seguro, extensión + mime real verificados con `file-type`, tamaño
+máximo, path traversal bloqueado) — no un bucket de Supabase Storage. Si
+alguna vez se reconsidera esto, que sea porque el usuario lo pide de nuevo,
+no porque parezca "más simple" técnicamente.
+
 ## Archivo excluido a propósito
 
 `Personal_Completo.xlsx` apareció en la raíz del repo local durante el

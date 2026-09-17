@@ -11,6 +11,14 @@ interface EmpleadoEncuestaRow {
   nombre_completo: string;
   activo: boolean;
   created_at: string;
+  nombres: string | null;
+  apellidos: string | null;
+  cargo: string | null;
+  departamento: string | null;
+  area: string | null;
+  proyecto: string | null;
+  celular: string | null;
+  email: string | null;
 }
 
 function toEmpleado(row: EmpleadoEncuestaRow): EmpleadoEncuesta {
@@ -20,6 +28,14 @@ function toEmpleado(row: EmpleadoEncuestaRow): EmpleadoEncuesta {
     nombreCompleto: row.nombre_completo,
     activo: row.activo,
     createdAt: row.created_at,
+    nombres: row.nombres,
+    apellidos: row.apellidos,
+    cargo: row.cargo,
+    departamento: row.departamento,
+    area: row.area,
+    proyecto: row.proyecto,
+    celular: row.celular,
+    email: row.email,
   };
 }
 
@@ -33,10 +49,27 @@ export class EmpleadosEncuestaSupabaseRepository implements EmpleadosEncuestaRep
     const qs = new URLSearchParams();
     qs.set('cedula', `eq.${cedula}`);
     qs.set('activo', 'eq.true');
-    qs.set('select', 'id,cedula,nombre_completo,activo,created_at');
+    qs.set(
+      'select',
+      'id,cedula,nombre_completo,activo,created_at,nombres,apellidos,cargo,departamento,area,proyecto,celular,email',
+    );
     const rows = await this.client.request<EmpleadoEncuestaRow[]>(`${this.table}?${qs.toString()}`, {
       schema: SUPABASE_SCHEMA,
     });
     return rows[0] ? toEmpleado(rows[0]) : null;
+  }
+
+  public async findAllActivos(): Promise<EmpleadoEncuesta[]> {
+    const qs = new URLSearchParams();
+    qs.set('activo', 'eq.true');
+    qs.set(
+      'select',
+      'id,cedula,nombre_completo,activo,created_at,nombres,apellidos,cargo,departamento,area,proyecto,celular,email',
+    );
+    qs.set('order', 'nombre_completo.asc');
+    const rows = await this.client.request<EmpleadoEncuestaRow[]>(`${this.table}?${qs.toString()}`, {
+      schema: SUPABASE_SCHEMA,
+    });
+    return rows.map(toEmpleado);
   }
 }

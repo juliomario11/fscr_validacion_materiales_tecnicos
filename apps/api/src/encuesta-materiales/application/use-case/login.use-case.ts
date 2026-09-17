@@ -11,6 +11,14 @@ export interface LoginResult {
   empleadoId: number;
   cedula: string;
   nombreCompleto: string;
+  nombres: string | null;
+  apellidos: string | null;
+  cargo: string | null;
+  departamento: string | null;
+  area: string | null;
+  proyecto: string | null;
+  celular: string | null;
+  email: string | null;
   sessionToken: string;
 }
 
@@ -37,6 +45,14 @@ export class LoginUseCase {
       empleadoId: empleado.id,
       cedula: empleado.cedula,
       nombreCompleto: empleado.nombreCompleto,
+      nombres: empleado.nombres,
+      apellidos: empleado.apellidos,
+      cargo: empleado.cargo,
+      departamento: empleado.departamento,
+      area: empleado.area,
+      proyecto: empleado.proyecto,
+      celular: empleado.celular,
+      email: empleado.email,
       sessionToken,
     };
   }

@@ -18,6 +18,8 @@ interface AdjuntoRow {
   subido_en: string;
 }
 
+const ADJUNTO_COLUMNS = 'id,respuesta_id,storage_path,nombre_archivo,tipo_mime,tamano_bytes,subido_en';
+
 function toAdjunto(row: AdjuntoRow): AdjuntoEncuesta {
   return {
     id: row.id,
@@ -54,5 +56,25 @@ export class AdjuntosEncuestaSupabaseRepository implements AdjuntosEncuestaRepos
       throw new Error('Supabase no devolvió el adjunto recién creado.');
     }
     return toAdjunto(created);
+  }
+
+  public async findById(id: number): Promise<AdjuntoEncuesta | null> {
+    const qs = new URLSearchParams();
+    qs.set('id', `eq.${id}`);
+    qs.set('select', ADJUNTO_COLUMNS);
+    const rows = await this.client.request<AdjuntoRow[]>(`${this.table}?${qs.toString()}`, {
+      schema: SUPABASE_SCHEMA,
+    });
+    return rows[0] ? toAdjunto(rows[0]) : null;
+  }
+
+  public async countByRespuestaId(respuestaId: number): Promise<number> {
+    const qs = new URLSearchParams();
+    qs.set('respuesta_id', `eq.${respuestaId}`);
+    qs.set('select', 'id');
+    const rows = await this.client.request<Array<{ id: number }>>(`${this.table}?${qs.toString()}`, {
+      schema: SUPABASE_SCHEMA,
+    });
+    return rows.length;
   }
 }

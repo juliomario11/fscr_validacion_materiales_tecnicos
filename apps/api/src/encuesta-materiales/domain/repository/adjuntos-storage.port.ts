@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream';
+
 export const ADJUNTOS_STORAGE = Symbol('ADJUNTOS_STORAGE');
 
 export interface ArchivoASubir {
@@ -11,8 +13,16 @@ export interface ArchivoSubido {
   tamanoBytes: number;
 }
 
-/** Puerto de storage de adjuntos -- implementado por `SupabaseStorageAdapter` (bucket privado `validacion-materiales-adjuntos`). */
+export interface ArchivoLeido {
+  stream: Readable;
+  mime: string;
+  tamanoBytes: number;
+}
+
+/** Puerto de storage de adjuntos -- implementado por `FilesystemAdjuntosStorage` (disco del servidor, `DOCUMENTS_STORAGE_PATH`). */
 export interface AdjuntosStoragePort {
-  /** Sube el binario bajo `${empleadoId}/${respuestaId}/${timestamp}-${nombreSlug}` y devuelve la ruta resultante dentro del bucket. */
+  /** Sube el binario bajo `${empleadoId}/${respuestaId}/${archivoOpaco}` (dentro de `DOCUMENTS_STORAGE_PATH`) y devuelve la ruta relativa resultante. */
   subir(empleadoId: number, respuestaId: number, archivo: ArchivoASubir): Promise<ArchivoSubido>;
+  /** Abre un stream de lectura para `storagePath` (el valor ya persistido en `encuesta_adjuntos.storage_path`), para servirlo por HTTP. */
+  leer(storagePath: string): Promise<ArchivoLeido>;
 }

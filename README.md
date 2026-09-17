@@ -24,6 +24,10 @@ apps/
   tablas del dominio: solo el backend puede leer/escribir).
 - **Frontend:** Angular standalone, consume la API con `withCredentials`
   (sesión en cookie httpOnly).
+- **Adjuntos:** filesystem del servidor (`DOCUMENTS_STORAGE_PATH`), mismo
+  patrón que `fscr_proveedores_factura` — no Supabase Storage. Validación de
+  nombre seguro, extensión + mime real (magic bytes) y tamaño máximo antes
+  de escribir a disco.
 - **Base de datos:** Supabase Postgres, schema `validacion_materiales_tecnicos`
   (proyecto compartido con otros dominios FSCR — `equipos_fscr`,
   `proveedores_fscr`, etc. — sin relación entre sí).
@@ -89,7 +93,10 @@ ssh fscradmin@100.74.71.100
 git clone https://github.com/juliomario11/fscr_validacion_materiales_tecnicos.git
 cd fscr_validacion_materiales_tecnicos
 cp apps/api/.env.example apps/api/.env   # completar Supabase real + SESSION_SECRET
-# En apps/api/.env: FSCR_API_PORT=18082, FSCR_SERVE_STATIC=false (Apache sirve los estáticos)
+# En apps/api/.env: FSCR_API_PORT=18082, FSCR_SERVE_STATIC=false (Apache sirve los estáticos),
+# DOCUMENTS_STORAGE_PATH=/var/lib/fscr/adjuntos_encuesta_tecnicos (ver mas abajo)
+sudo mkdir -p /var/lib/fscr/adjuntos_encuesta_tecnicos
+sudo chown fscradmin:fscradmin /var/lib/fscr/adjuntos_encuesta_tecnicos
 npm install -g pm2   # si no está ya instalado (fscr_proveedores_factura ya lo instaló)
 chmod +x deploy.sh
 
@@ -115,6 +122,12 @@ Pendiente por confirmar la primera vez que se corra en el servidor real
 (ver `PENDIENTES.md`): `pm2 startup` para que el proceso sobreviva un
 reinicio del servidor, igual que ya debería estar hecho para `fscr-api`.
 
+Los adjuntos (fotos/soportes) se guardan en disco, en
+`DOCUMENTS_STORAGE_PATH` (`/var/lib/fscr/adjuntos_encuesta_tecnicos` en el
+servidor real) — no en Supabase Storage. Debe apuntar a un directorio
+persistente propio de este proyecto (no compartir la ruta de
+`fscr_proveedores_factura`).
+
 ## Validación (pre-commit / pre-PR)
 
 ```bash
@@ -130,9 +143,9 @@ Ver [`ESTRUCTURA.md`](ESTRUCTURA.md) para el detalle de carpetas y
 de este primer alcance (documentado con `TODO` en el código donde aplica):
 
 - Reabrir una encuesta ya confirmada (hoy es definitivo).
-- Borrado de adjuntos huérfanos en Supabase Storage al eliminar una
-  respuesta en borrador (el registro en BD sí se limpia por `ON DELETE
-  CASCADE`, el archivo binario no).
+- Borrado de adjuntos huérfanos en disco al eliminar una respuesta en
+  borrador (el registro en BD sí se limpia por `ON DELETE CASCADE`, el
+  archivo binario en `DOCUMENTS_STORAGE_PATH` no).
 - Vista/panel para que alguien de negocio consulte los resultados agregados
   de la encuesta (hoy los datos solo se pueden consultar por SQL directo en
   Supabase).

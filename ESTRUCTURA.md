@@ -25,9 +25,10 @@ apps/
           dto/               Request/Response contracts (class-validator)
           use-case/          Un caso de uso por archivo
           exception/         Excepciones de negocio del dominio
+          services/adjunto-validation.ts  Nombre seguro, extension+mime real (file-type), tamaño máx
         infrastructure/
           supabase/          Adapters PostgREST (fetch nativo + service_role key)
-          storage/           Adapter de subida a Supabase Storage
+          storage/           FilesystemAdjuntosStorage -- disco del servidor (DOCUMENTS_STORAGE_PATH), no Supabase Storage
         presentation/
           controller/        auth, health, materiales, respuestas
     test/                     e2e de humo (Jest + supertest)
@@ -56,7 +57,7 @@ Este proyecto es dueño exclusivo del schema `validacion_materiales_tecnicos`:
 | `materiales` | 358 | Catálogo cerrado; `categoria` es una de 11 valores fijos asignados por agentes IA a partir de la descripción |
 | `empleados_encuesta` | 113 | Whitelist; cédula+nombre tomados directo del negocio, no de `bdgeproc` (cobertura no confiable — ver `equipos_fscr.bodegas.responsable_usuario_legado`) |
 | `encuesta_respuestas` | 0 | Una fila por (empleado, material); `UNIQUE(empleado_id, material_id)`; `estado` borrador/confirmado |
-| `encuesta_adjuntos` | 0 | Metadata de archivos en el bucket `validacion-materiales-adjuntos` (Storage privado) |
+| `encuesta_adjuntos` | 0 | Solo metadata (`storage_path` relativo); el binario vive en disco del servidor, `DOCUMENTS_STORAGE_PATH` |
 
 RLS habilitado sin políticas en las 4 tablas — deny-all salvo `service_role`.
 El backend es el único que puede leer/escribir; cualquier política para

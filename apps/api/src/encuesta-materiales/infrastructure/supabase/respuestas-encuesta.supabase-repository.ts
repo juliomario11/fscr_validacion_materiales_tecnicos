@@ -99,6 +99,16 @@ export class RespuestasEncuestaSupabaseRepository implements RespuestasEncuestaR
     return rows.map(toRespuestaConDetalle);
   }
 
+  public async findAllConDetalle(): Promise<RespuestaConDetalle[]> {
+    const qs = new URLSearchParams();
+    qs.set('select', RESPUESTA_CON_DETALLE_SELECT);
+    qs.set('order', 'id.asc');
+    const rows = await this.client.request<RespuestaConDetalleRow[]>(`${this.table}?${qs.toString()}`, {
+      schema: SUPABASE_SCHEMA,
+    });
+    return rows.map(toRespuestaConDetalle);
+  }
+
   public async findByEmpleadoYMaterial(
     empleadoId: number,
     materialId: number,

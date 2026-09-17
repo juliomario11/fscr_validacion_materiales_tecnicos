@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { AdjuntoResponseDto, RespuestaResponseDto } from '../../application/dto/
 import { ConfirmarRespuestasResponseDto } from '../../application/dto/confirmar.dto';
 import { UpsertRespuestaRequestDto } from '../../application/dto/upsert-respuesta.dto';
 import { ConfirmarRespuestasUseCase } from '../../application/use-case/confirmar-respuestas.use-case';
+import { DescargarAdjuntoUseCase } from '../../application/use-case/descargar-adjunto.use-case';
 import { EliminarRespuestaUseCase } from '../../application/use-case/eliminar-respuesta.use-case';
 import { ListarMisRespuestasUseCase } from '../../application/use-case/listar-mis-respuestas.use-case';
 import { SubirAdjuntoUseCase } from '../../application/use-case/subir-adjunto.use-case';
@@ -75,6 +77,7 @@ export class RespuestasController {
     private readonly eliminarRespuesta: EliminarRespuestaUseCase,
     private readonly subirAdjunto: SubirAdjuntoUseCase,
     private readonly confirmarRespuestas: ConfirmarRespuestasUseCase,
+    private readonly descargarAdjunto: DescargarAdjuntoUseCase,
   ) {}
 
   @Get()
@@ -139,5 +142,24 @@ export class RespuestasController {
       mimeType: file.mimetype,
     });
     return { id: adjunto.id, nombreArchivo: adjunto.nombreArchivo, subidoEn: adjunto.subidoEn };
+  }
+
+  /**
+   * Descarga/preview de un adjunto ya subido. `inline` (no `attachment`) para
+   * que el navegador pueda mostrarlo directo en <img>/<iframe> si el cliente
+   * lo pide así; el mismo endpoint también sirve para forzar descarga desde
+   * el frontend armando un blob y un <a download>.
+   */
+  @Get('adjuntos/:adjuntoId/file')
+  public async descargarAdjuntoEndpoint(
+    @CurrentEmpleado() empleado: SessionEmpleado,
+    @Param('adjuntoId', ParseIntPipe) adjuntoId: number,
+  ): Promise<StreamableFile> {
+    const archivo = await this.descargarAdjunto.execute(empleado.empleadoId, adjuntoId);
+    return new StreamableFile(archivo.stream, {
+      type: archivo.mime,
+      disposition: `inline; filename="${encodeURIComponent(archivo.nombreArchivo)}"`,
+      length: archivo.tamanoBytes,
+    });
   }
 }

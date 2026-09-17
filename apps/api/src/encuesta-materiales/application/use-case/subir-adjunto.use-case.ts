@@ -14,9 +14,13 @@ import {
   type RespuestasEncuestaRepository,
 } from '../../domain/repository/respuestas-encuesta.repository';
 import {
+  LimiteAdjuntosExcedidoException,
   RespuestaConfirmadaException,
   RespuestaNoEncontradaException,
 } from '../exception/encuesta-materiales.exceptions';
+
+/** Tope defensivo -- evita que un empleado suba una cantidad desmedida de evidencia para un solo material. */
+export const MAX_ADJUNTOS_POR_RESPUESTA = 5;
 
 export interface SubirAdjuntoInput {
   empleadoId: number;
@@ -51,6 +55,11 @@ export class SubirAdjuntoUseCase {
       throw new RespuestaConfirmadaException(
         'Esta respuesta ya fue confirmada y no admite nuevos adjuntos.',
       );
+    }
+
+    const yaSubidos = await this.adjuntosRepository.countByRespuestaId(respuesta.id);
+    if (yaSubidos >= MAX_ADJUNTOS_POR_RESPUESTA) {
+      throw new LimiteAdjuntosExcedidoException();
     }
 
     const subido = await this.storage.subir(input.empleadoId, respuesta.id, {

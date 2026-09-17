@@ -5,4 +5,13 @@ export interface EmpleadoEncuesta {
   nombreCompleto: string;
   activo: boolean;
   createdAt: string;
+  /** Enriquecido desde un cruce de RRHH -- puede venir null en cualquiera de estos campos. */
+  nombres: string | null;
+  apellidos: string | null;
+  cargo: string | null;
+  departamento: string | null;
+  area: string | null;
+  proyecto: string | null;
+  celular: string | null;
+  email: string | null;
 }

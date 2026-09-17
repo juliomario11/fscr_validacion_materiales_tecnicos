@@ -2,7 +2,11 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logge
 import type { Request, Response } from 'express';
 
 import {
+  AdjuntoInvalidoException,
+  AdjuntoNoEncontradoException,
+  CredencialAdminInvalidaException,
   CredencialInvalidaException,
+  LimiteAdjuntosExcedidoException,
   MaterialNoEncontradoException,
   RespuestaConfirmadaException,
   RespuestaNoEncontradaException,
@@ -64,13 +68,17 @@ export class DomainExceptionsFilter implements ExceptionFilter {
   }
 
   private normalize(exception: unknown): NormalizedError {
-    if (exception instanceof CredencialInvalidaException) {
+    if (
+      exception instanceof CredencialInvalidaException ||
+      exception instanceof CredencialAdminInvalidaException
+    ) {
       return { statusCode: HttpStatus.UNAUTHORIZED, message: exception.message, error: 'Unauthorized' };
     }
 
     if (
       exception instanceof MaterialNoEncontradoException ||
-      exception instanceof RespuestaNoEncontradaException
+      exception instanceof RespuestaNoEncontradaException ||
+      exception instanceof AdjuntoNoEncontradoException
     ) {
       return { statusCode: HttpStatus.NOT_FOUND, message: exception.message, error: 'Not Found' };
     }
@@ -80,6 +88,10 @@ export class DomainExceptionsFilter implements ExceptionFilter {
     }
 
     if (exception instanceof SinRespuestasParaConfirmarException) {
+      return { statusCode: HttpStatus.BAD_REQUEST, message: exception.message, error: 'Bad Request' };
+    }
+
+    if (exception instanceof AdjuntoInvalidoException || exception instanceof LimiteAdjuntosExcedidoException) {
       return { statusCode: HttpStatus.BAD_REQUEST, message: exception.message, error: 'Bad Request' };
     }
 

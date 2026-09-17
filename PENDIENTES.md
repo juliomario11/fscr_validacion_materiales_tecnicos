@@ -14,10 +14,16 @@ recién arrancado) — cuando crezca, adoptar el mismo estilo de
   consulte qué declaró cada colaborador. Hoy solo es consultable por SQL
   directo en el schema `validacion_materiales_tecnicos` de Supabase.
 - **Limpieza de adjuntos huérfanos**: al eliminar una respuesta en borrador,
-  el `ON DELETE CASCADE` limpia la fila de `encuesta_adjuntos` pero el
-  archivo binario en el bucket `validacion-materiales-adjuntos` de Supabase
-  Storage queda huérfano. Ver `TODO` en
+  el `ON DELETE CASCADE` limpia la fila de `encuesta_adjuntos` en Supabase
+  pero el archivo binario en disco (`DOCUMENTS_STORAGE_PATH` del servidor)
+  queda huérfano. Ver `TODO` en
   `apps/api/src/encuesta-materiales/application/use-case/eliminar-respuesta.use-case.ts`.
+- **Sin backup del disco de adjuntos**: los archivos viven en
+  `/var/lib/fscr/adjuntos_encuesta_tecnicos` en el servidor Ubuntu real, sin
+  ningún respaldo automatizado -- si se pierde ese disco, se pierden todas
+  las fotos/soportes subidos (la metadata en Supabase sobrevive, los
+  binarios no). Mismo riesgo que ya está documentado para
+  `fscr_proveedores_factura`.
 - **Vista previa/descarga de adjuntos**: el backend no expone todavía un
   endpoint para descargar o previsualizar un adjunto ya subido; el frontend
   solo muestra nombre de archivo + fecha.
