@@ -52,15 +52,27 @@ hermano). La whitelist en `empleados_encuesta` viene directo del negocio.
 ## Despliegue real (no confundir con `.do/app.yaml`)
 
 El método de despliegue real es un servidor Ubuntu propio llamado
-`factproveedores` (Tailscale, `100.74.71.100`), el mismo donde ya corre
-`fscr_proveedores_factura` en el puerto 9100 — vía pm2 (`ecosystem.config.js`)
-y `deploy.sh`, con Apache2 como proxy inverso (configuración de Apache no
-versionada aquí, vive solo en `/etc/apache2` del servidor). Este proyecto
-usa el puerto 8082. `.do/app.yaml` (DigitalOcean App Platform) es una
-alternativa que se dejó preparada pero que **no** es el despliegue real
-usado hoy — no asumas que un push a `main` se despliega solo; el deploy en
-el servidor Ubuntu es manual (`./deploy.sh`), decisión explícita del dueño
-del proyecto, igual que en el repo hermano.
+`factproveedores` (Tailscale, `100.74.71.100`), donde ya conviven varios
+proyectos, cada uno con su propio puerto público y su propio proceso:
+
+| Proyecto | Puerto público (Apache) | Backend | Vhost |
+|---|---|---|---|
+| `fscr_proveedores_factura` | 80 | pm2, interno 9100 | `fscr_proveedores...conf` — Apache sirve Angular (`DocumentRoot`) + `ProxyPass /api` a `localhost:9100` |
+| `sgi` | 8081 | ninguno (SPA pura) | `sgi.conf` — Apache sirve estáticos directo, sin proxy |
+| Este proyecto | **8082** | pm2, interno **18082** | `fscr-validacion-materiales.conf` — mismo patrón que facturas: `DocumentRoot` + `ProxyPass /api` a `localhost:18082` |
+
+Cada app tiene su `VirtualHost *:<puerto público>` dedicado (no comparten
+vhost ni path) — sigue ese patrón si se agrega algo nuevo. **En este
+esquema, Apache sirve los estáticos de Angular directamente**, no el
+proceso Node (`FSCR_SERVE_STATIC` debe quedar en `false` tanto en local
+como en el servidor real; solo se usa `true` en la alternativa de
+DigitalOcean App Platform, que no es el despliegue real).
+
+`deploy.sh` automatiza todo esto (build, restart de pm2, creación del vhost
+si no existe) — pero solo se ejecuta manualmente en el servidor
+(`bash deploy.sh`, nunca con `sudo`), nunca desde CI ni automáticamente al
+hacer push. `.do/app.yaml` (DigitalOcean App Platform) es una alternativa
+que se dejó preparada pero que **no** es el despliegue real usado hoy.
 
 Este agente no tiene acceso SSH al servidor desde el entorno de desarrollo
 (sin clave/agente configurado) — cualquier cambio en `/etc/apache2` o

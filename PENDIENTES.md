@@ -24,16 +24,20 @@ recién arrancado) — cuando crezca, adoptar el mismo estilo de
 
 ## Operación — despliegue en el servidor Ubuntu
 
-- **Vhost de Apache2 para el puerto 8082**: pendiente de crear en el
-  servidor `factproveedores` (fuera de este repo, Apache no se versiona
-  aquí). Debe redirigir hacia `127.0.0.1:8082`, igual en espíritu al vhost
-  que ya existe para `fscr_proveedores_factura` en el 9100 (mismo servidor).
-  Lo aplica el usuario directamente (o vía su propio tooling de servidor),
-  no este repo.
+- **Vhost de Apache2 para el puerto 8082**: `deploy.sh` ya lo automatiza
+  (crea `/etc/apache2/sites-available/fscr-validacion-materiales.conf` si
+  no existe, agrega `Listen 8082`, habilita módulos y el sitio) — pendiente
+  solo de **correrlo una vez en el servidor real** para confirmar que
+  aplica limpio (`apache2ctl configtest` antes de recargar) y no afecta a
+  `fscr_proveedores.conf` (puerto 80/9100) ni `sgi.conf` (puerto 8081).
 - **`pm2 startup`**: confirmar si ya está configurado en el servidor para
   que los procesos pm2 sobrevivan un reinicio (`fscr-api` de
   `fscr_proveedores_factura` puede ya tenerlo) y replicarlo para
   `fscr-validacion-materiales-api` si hace falta.
+- **DNS/`ServerName`**: el vhost usa `ServerName validacion-materiales.factproveedores`,
+  que no resuelve por DNS real — no importa porque el acceso es directo por
+  IP:puerto (`http://100.74.71.100:8082`) vía Tailscale, igual que `sgi`. Si
+  en el futuro se necesita un dominio público real, hay que revisarlo.
 
 ## Seguridad / operación
 

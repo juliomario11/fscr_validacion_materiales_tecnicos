@@ -69,11 +69,15 @@ acceso directo desde el cliente (hoy no lo necesita: todo pasa por la API).
   usar el puerto libre que corresponda si se corre junto a otro backend
   local), `ng serve` en 4200.
 - **Servidor Ubuntu (real, producción):** `factproveedores` vía Tailscale
-  (`100.74.71.100`), pm2 + `deploy.sh` (mismo patrón que
-  `fscr_proveedores_factura` en el mismo servidor, puerto 9100 — este
-  proyecto usa 8082). Apache2 hace de proxy inverso; su configuración vive
-  en `/etc/apache2` del servidor, no en este repo. Ver "Deploy en el
-  servidor Ubuntu" en `README.md`.
+  (`100.74.71.100`). `deploy.sh` compila y reinicia pm2 (proceso
+  `fscr-validacion-materiales-api`, puerto interno **18082**) y crea/gestiona
+  un `VirtualHost *:8082` dedicado de Apache2 (mismo patrón que `sgi.conf`
+  en el mismo servidor): Apache sirve el build de Angular directamente
+  (`DocumentRoot`) y hace `ProxyPass /api` hacia `localhost:18082`. No
+  comparte vhost ni puerto con `fscr_proveedores_factura` (público 80,
+  interno 9100) ni con `sgi` (público 8081). La config de Apache vive en
+  `/etc/apache2` del servidor, no en este repo — solo el `deploy.sh` que la
+  genera. Ver "Deploy en el servidor Ubuntu" en `README.md`.
 - **DigitalOcean App Platform:** alternativa vía `.do/app.yaml` +
   Secrets en la UI, `deploy_on_push: true` sobre `main` — no es el método
   usado hoy.
