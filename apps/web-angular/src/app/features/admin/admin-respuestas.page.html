@@ -18,7 +18,10 @@
     <p>Cargando respuestas...</p>
   } @else {
     <section class="card admin__tabla">
-      <h2>Respuestas ({{ respuestas().length }})</h2>
+      <div class="admin__tabla-acciones">
+        <h2>Respuestas ({{ respuestas().length }})</h2>
+        <button class="btn btn--primary" type="button" (click)="exportar()">Exportar a Excel</button>
+      </div>
 
       <table class="table">
         <thead>
