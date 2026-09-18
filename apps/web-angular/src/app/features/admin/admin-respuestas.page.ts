@@ -47,6 +47,7 @@ export class AdminRespuestasPage implements OnInit {
         { header: 'Categoría', value: (fila) => fila.material.categoria },
         { header: 'Cantidad', value: (fila) => fila.cantidad },
         { header: 'Unidad', value: (fila) => fila.material.unidadMedida },
+        { header: 'Serial', value: (fila) => fila.serial },
         { header: 'Observaciones', value: (fila) => fila.observaciones },
         { header: 'Estado', value: (fila) => (fila.estado === 'confirmado' ? 'Confirmado' : 'Borrador') },
         { header: 'Adjuntos', value: (fila) => fila.cantidadAdjuntos },

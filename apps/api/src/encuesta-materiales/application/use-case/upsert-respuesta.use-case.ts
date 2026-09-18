@@ -19,6 +19,7 @@ export interface UpsertRespuestaInput {
   materialId: number;
   cantidad: number;
   observaciones: string | null;
+  serial: string | null;
 }
 
 @Injectable()
@@ -52,6 +53,7 @@ export class UpsertRespuestaUseCase {
       await this.respuestasRepository.update(existente.id, {
         cantidad: input.cantidad,
         observaciones: input.observaciones,
+        serial: input.serial,
       });
       return this.releerConDetalle(existente.id);
     }
@@ -61,6 +63,7 @@ export class UpsertRespuestaUseCase {
       materialId: input.materialId,
       cantidad: input.cantidad,
       observaciones: input.observaciones,
+      serial: input.serial,
     });
     return this.releerConDetalle(creada.id);
   }

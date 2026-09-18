@@ -14,6 +14,8 @@ export interface RespuestaEncuesta {
   materialId: number;
   cantidad: number;
   observaciones: string | null;
+  /** Número de serie del ítem, cuando aplica (equipos como computadores) -- opcional, `null` si el material no lo requiere. */
+  serial: string | null;
   estado: EstadoRespuestaEncuesta;
   fechaInicio: string;
   fechaConfirmacion: string | null;

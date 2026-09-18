@@ -56,7 +56,7 @@ Este proyecto es dueño exclusivo del schema `validacion_materiales_tecnicos`:
 |-------|------------------|-------|
 | `materiales` | 358 | Catálogo cerrado; `categoria` es una de 11 valores fijos asignados por agentes IA a partir de la descripción |
 | `empleados_encuesta` | 113 | Whitelist; cédula+nombre tomados directo del negocio, no de `bdgeproc` (cobertura no confiable — ver `equipos_fscr.bodegas.responsable_usuario_legado`) |
-| `encuesta_respuestas` | 0 | Una fila por (empleado, material); `UNIQUE(empleado_id, material_id)`; `estado` borrador/confirmado |
+| `encuesta_respuestas` | 0 | Una fila por (empleado, material); `UNIQUE(empleado_id, material_id)`; `estado` borrador/confirmado; `serial` (texto, nullable) para el número de serie cuando aplica -- ej. computadores -- no es obligatorio para el resto de materiales |
 | `encuesta_adjuntos` | 0 | Solo metadata (`storage_path` relativo); el binario vive en disco del servidor, `DOCUMENTS_STORAGE_PATH` |
 
 RLS habilitado sin políticas en las 4 tablas — deny-all salvo `service_role`.

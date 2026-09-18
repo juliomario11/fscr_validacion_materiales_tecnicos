@@ -19,6 +19,7 @@ export interface AdminRespuesta {
   readonly material: AdminMaterialResumen;
   readonly cantidad: number;
   readonly observaciones: string | null;
+  readonly serial: string | null;
   readonly estado: EstadoRespuesta;
   readonly fechaInicio: string;
   readonly fechaConfirmacion: string | null;

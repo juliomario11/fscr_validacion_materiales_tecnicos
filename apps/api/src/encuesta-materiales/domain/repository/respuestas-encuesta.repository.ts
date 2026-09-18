@@ -8,6 +8,7 @@ export interface UpsertRespuestaPayload {
   materialId: number;
   cantidad: number;
   observaciones: string | null;
+  serial: string | null;
 }
 
 export interface RespuestasEncuestaRepository {
@@ -21,7 +22,7 @@ export interface RespuestasEncuestaRepository {
   insert(payload: UpsertRespuestaPayload): Promise<RespuestaEncuesta>;
   update(
     id: number,
-    payload: Pick<UpsertRespuestaPayload, 'cantidad' | 'observaciones'>,
+    payload: Pick<UpsertRespuestaPayload, 'cantidad' | 'observaciones' | 'serial'>,
   ): Promise<RespuestaEncuesta>;
   /** Solo debe llamarse tras confirmar (en el use-case) que la fila está en estado 'borrador'. */
   delete(id: number): Promise<void>;

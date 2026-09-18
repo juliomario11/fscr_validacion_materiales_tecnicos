@@ -88,6 +88,16 @@
           </label>
 
           <label class="field">
+            <span>Número de serie (opcional -- si aplica, ej. computadores)</span>
+            <input
+              type="text"
+              placeholder="Ej. SN-2024-00123"
+              [ngModel]="serial()"
+              (ngModelChange)="serial.set($event)"
+            />
+          </label>
+
+          <label class="field">
             <span>Observaciones (opcional)</span>
             <textarea
               rows="3"
@@ -191,6 +201,7 @@
             <tr>
               <th>Material</th>
               <th>Cantidad</th>
+              <th>Serial</th>
               <th>Observaciones</th>
               <th>Adjunto</th>
               <th>Acciones</th>
@@ -201,6 +212,7 @@
               <tr>
                 <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
                 <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+                <td>{{ respuesta.serial || '—' }}</td>
                 <td>{{ respuesta.observaciones || '—' }}</td>
                 <td>
                   @if (respuesta.adjuntos?.length) {

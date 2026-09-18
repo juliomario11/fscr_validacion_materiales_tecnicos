@@ -13,6 +13,8 @@ export interface RespuestaMaterial {
   readonly material: Material;
   readonly cantidad: number;
   readonly observaciones: string | null;
+  /** Número de serie del ítem, cuando aplica (ej. computadores) -- `null` si el material no lo requiere. */
+  readonly serial: string | null;
   readonly estado: EstadoRespuesta;
   readonly fechaInicio: string;
   readonly fechaConfirmacion: string | null;
@@ -22,6 +24,7 @@ export interface RespuestaMaterial {
 export interface GuardarRespuestaPayload {
   readonly cantidad: number;
   readonly observaciones: string | null;
+  readonly serial: string | null;
 }
 
 /** Respuesta de `POST /mis-respuestas/confirmar`. */

@@ -20,6 +20,7 @@ export class RespuestaResponseDto {
   public material!: MaterialEmbebidoDto;
   public cantidad!: number;
   public observaciones!: string | null;
+  public serial!: string | null;
   public estado!: EstadoRespuestaEncuesta;
   public fechaInicio!: string;
   public fechaConfirmacion!: string | null;

@@ -32,6 +32,7 @@
             <th>Empleado</th>
             <th>Material</th>
             <th>Cantidad</th>
+            <th>Serial</th>
             <th>Observaciones</th>
             <th>Estado</th>
             <th>Adjuntos</th>
@@ -44,6 +45,7 @@
               <td>{{ respuesta.empleado.nombreCompleto }} ({{ respuesta.empleado.cedula }})</td>
               <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
               <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+              <td>{{ respuesta.serial || '—' }}</td>
               <td>{{ respuesta.observaciones || '—' }}</td>
               <td>
                 <span class="badge" [class]="'badge--estado-' + respuesta.estado">
@@ -57,7 +59,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7">No hay respuestas registradas.</td>
+              <td colspan="8">No hay respuestas registradas.</td>
             </tr>
           }
         </tbody>

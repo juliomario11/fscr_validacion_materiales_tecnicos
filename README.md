@@ -2,7 +2,8 @@
 
 Encuesta interna para que los técnicos de campo de FSCR declaren, uno por
 uno, qué materiales/herramientas del catálogo técnico tienen actualmente en
-su poder (cantidad, observaciones y evidencia fotográfica opcional).
+su poder (cantidad, número de serie opcional cuando aplica -- ej.
+computadores --, observaciones y evidencia fotográfica opcional).
 
 No es una comparación automática contra el inventario real (Geproc/bdgeproc)
 — es una autodeclaración: el colaborador elige de una lista cerrada, sin que
@@ -57,7 +58,8 @@ esa sesión — ningún endpoint acepta un `empleadoId` que venga del cliente.
 1. El colaborador entra con su cédula.
 2. Busca y selecciona un material del catálogo (358 ítems, 11 categorías),
    indica la cantidad que tiene (en la unidad de medida propia del
-   material) y observaciones opcionales; puede adjuntar una foto/soporte.
+   material), el número de serie si aplica (ej. computadores) y
+   observaciones opcionales; puede adjuntar una foto/soporte.
 3. Puede seguir agregando materiales, editarlos o quitarlos mientras su
    respuesta esté en estado `borrador`.
 4. Antes de enviar, ve un **resumen de confirmación de solo lectura** con

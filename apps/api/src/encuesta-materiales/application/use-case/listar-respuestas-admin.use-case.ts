@@ -43,6 +43,7 @@ export class ListarRespuestasAdminUseCase {
         },
         cantidad: respuesta.cantidad,
         observaciones: respuesta.observaciones,
+        serial: respuesta.serial,
         estado: respuesta.estado,
         fechaInicio: respuesta.fechaInicio,
         fechaConfirmacion: respuesta.fechaConfirmacion,

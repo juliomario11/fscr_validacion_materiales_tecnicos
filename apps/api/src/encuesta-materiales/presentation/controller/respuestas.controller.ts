@@ -58,6 +58,7 @@ function toRespuestaDto(respuesta: RespuestaConDetalle): RespuestaResponseDto {
     },
     cantidad: respuesta.cantidad,
     observaciones: respuesta.observaciones,
+    serial: respuesta.serial,
     estado: respuesta.estado,
     fechaInicio: respuesta.fechaInicio,
     fechaConfirmacion: respuesta.fechaConfirmacion,
@@ -111,6 +112,7 @@ export class RespuestasController {
       materialId,
       cantidad: body.cantidad,
       observaciones: body.observaciones ?? null,
+      serial: body.serial ?? null,
     });
     return toRespuestaDto(respuesta);
   }

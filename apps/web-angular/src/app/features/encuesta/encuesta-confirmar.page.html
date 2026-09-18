@@ -21,6 +21,7 @@
         <tr>
           <th>Material</th>
           <th>Cantidad</th>
+          <th>Serial</th>
           <th>Observaciones</th>
           <th>Adjuntos</th>
         </tr>
@@ -30,6 +31,7 @@
           <tr>
             <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
             <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+            <td>{{ respuesta.serial || '—' }}</td>
             <td>{{ respuesta.observaciones || '—' }}</td>
             <td>{{ respuesta.adjuntos?.length ? respuesta.adjuntos!.length : 0 }}</td>
           </tr>

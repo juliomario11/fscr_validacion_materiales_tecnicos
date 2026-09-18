@@ -9,4 +9,10 @@ export class UpsertRespuestaRequestDto {
   @IsString()
   @MaxLength(2000)
   public observaciones?: string;
+
+  /** Número de serie del ítem, cuando aplica (ej. computadores) -- opcional, no todos los materiales lo requieren. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  public serial?: string;
 }

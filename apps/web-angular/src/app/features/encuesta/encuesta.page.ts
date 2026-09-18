@@ -39,6 +39,7 @@ export class EncuestaPage implements OnInit, OnDestroy {
   protected readonly materialSeleccionadoId = signal<number | null>(null);
   protected readonly cantidad = signal<number | null>(null);
   protected readonly observaciones = signal('');
+  protected readonly serial = signal('');
   protected readonly archivo = signal<File | null>(null);
 
   protected readonly guardando = signal(false);
@@ -149,6 +150,7 @@ export class EncuestaPage implements OnInit, OnDestroy {
       .find((respuesta) => respuesta.materialId === material.id);
     this.cantidad.set(existente?.cantidad ?? null);
     this.observaciones.set(existente?.observaciones ?? '');
+    this.serial.set(existente?.serial ?? '');
   }
 
   protected editar(respuesta: RespuestaMaterial): void {
@@ -159,6 +161,7 @@ export class EncuestaPage implements OnInit, OnDestroy {
     this.materialSeleccionadoId.set(null);
     this.cantidad.set(null);
     this.observaciones.set('');
+    this.serial.set('');
     this.archivo.set(null);
     this.errorGuardado.set(null);
     this.errorAdjunto.set(null);
@@ -215,6 +218,7 @@ export class EncuestaPage implements OnInit, OnDestroy {
       .guardarRespuesta(material.id, {
         cantidad,
         observaciones: this.observaciones().trim() || null,
+        serial: this.serial().trim() || null,
       })
       .subscribe({
         next: () => {

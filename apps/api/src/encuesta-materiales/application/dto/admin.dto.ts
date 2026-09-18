@@ -47,6 +47,7 @@ export class RespuestaAdminResponseDto {
   public material!: MaterialAdminResumenDto;
   public cantidad!: number;
   public observaciones!: string | null;
+  public serial!: string | null;
   public estado!: 'borrador' | 'confirmado';
   public fechaInicio!: string;
   public fechaConfirmacion!: string | null;

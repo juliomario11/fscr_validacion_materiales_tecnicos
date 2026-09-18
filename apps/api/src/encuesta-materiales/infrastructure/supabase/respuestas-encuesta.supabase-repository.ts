@@ -16,6 +16,7 @@ interface RespuestaRow {
   material_id: number;
   cantidad: number | string;
   observaciones: string | null;
+  serial: string | null;
   estado: 'borrador' | 'confirmado';
   fecha_inicio: string;
   fecha_confirmacion: string | null;
@@ -36,7 +37,7 @@ interface RespuestaConDetalleRow extends RespuestaRow {
 }
 
 const RESPUESTA_COLUMNS =
-  'id,empleado_id,material_id,cantidad,observaciones,estado,fecha_inicio,fecha_confirmacion,created_at,updated_at';
+  'id,empleado_id,material_id,cantidad,observaciones,serial,estado,fecha_inicio,fecha_confirmacion,created_at,updated_at';
 
 const RESPUESTA_CON_DETALLE_SELECT =
   `${RESPUESTA_COLUMNS},materiales(${MATERIAL_SELECT_COLUMNS}),encuesta_adjuntos(id,nombre_archivo,subido_en)`;
@@ -48,6 +49,7 @@ function toRespuesta(row: RespuestaRow): RespuestaEncuesta {
     materialId: row.material_id,
     cantidad: Number(row.cantidad),
     observaciones: row.observaciones,
+    serial: row.serial,
     estado: row.estado,
     fechaInicio: row.fecha_inicio,
     fechaConfirmacion: row.fecha_confirmacion,
@@ -143,6 +145,7 @@ export class RespuestasEncuestaSupabaseRepository implements RespuestasEncuestaR
         material_id: payload.materialId,
         cantidad: payload.cantidad,
         observaciones: payload.observaciones,
+        serial: payload.serial,
       },
     });
     const created = rows[0];
@@ -154,7 +157,7 @@ export class RespuestasEncuestaSupabaseRepository implements RespuestasEncuestaR
 
   public async update(
     id: number,
-    payload: Pick<UpsertRespuestaPayload, 'cantidad' | 'observaciones'>,
+    payload: Pick<UpsertRespuestaPayload, 'cantidad' | 'observaciones' | 'serial'>,
   ): Promise<RespuestaEncuesta> {
     const qs = new URLSearchParams();
     qs.set('id', `eq.${id}`);
@@ -166,6 +169,7 @@ export class RespuestasEncuestaSupabaseRepository implements RespuestasEncuestaR
       body: {
         cantidad: payload.cantidad,
         observaciones: payload.observaciones,
+        serial: payload.serial,
       },
     });
     const updated = rows[0];
