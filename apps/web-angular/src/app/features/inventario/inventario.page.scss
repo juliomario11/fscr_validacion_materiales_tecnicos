@@ -19,6 +19,18 @@
   gap: 14px;
 }
 
+@media (max-width: 640px) {
+  .inventario__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .inventario__header > .btn {
+    align-self: flex-end;
+  }
+}
+
 .inventario__header h1 {
   margin: 0 0 4px;
   font-size: 1.3rem;
@@ -148,6 +160,21 @@
   gap: 5px;
 }
 
+.btn--texto {
+  height: 30px;
+  padding: 0 4px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--brand);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.btn--texto:hover:not(:disabled) {
+  background: transparent;
+  color: var(--brand-hover);
+}
+
 .inventario__precarga-detalle {
   display: grid;
   gap: 10px;
@@ -251,6 +278,7 @@
 .badge--exito {
   background: #e3f9e5;
   color: var(--success);
+  gap: 4px;
 }
 
 .badge--advertencia {

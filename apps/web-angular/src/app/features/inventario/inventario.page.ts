@@ -82,6 +82,15 @@ export class InventarioPage implements OnInit, OnDestroy {
   private readonly coincideSerialState = signal<ReadonlyMap<number, boolean>>(new Map());
   /** Serial real, SOLO cuando `coincideSerialState` es `false` -- arranca vacío a propósito, nunca precargado con el valor viejo. */
   private readonly nuevosSerialesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
+  /**
+   * Ids de ítems precargados que el técnico colapsó manualmente tras
+   * completar los campos -- clave para que la página no se vuelva
+   * kilométrica en un técnico con 80+ ítems asignados. Solo se puede
+   * colapsar una vez hay una decisión LOCAL válida (`puedeColapsarDetalle`);
+   * arranca vacío (desplegado) y se limpia cada vez que cambia de opinión
+   * entre "sí"/"no" para que el nuevo modo se vea de una vez.
+   */
+  private readonly detalleColapsadoState = signal<ReadonlySet<number>>(new Set());
 
   protected readonly previewNombre = signal<string | null>(null);
   protected readonly previewTipo = signal<TipoPreview | null>(null);
@@ -383,6 +392,28 @@ export class InventarioPage implements OnInit, OnDestroy {
     return this.eligiendoNegativaState().has(respuestaId);
   }
 
+  /** Solo se puede colapsar el detalle una vez hay una decisión LOCAL válida guardada -- mientras falte un campo obligatorio, el detalle se mantiene visible. */
+  protected puedeColapsarDetalle(respuestaId: number): boolean {
+    return !!this.decisionPrecarga(respuestaId);
+  }
+
+  /** `true` = detalle visible (cantidad/serial/observaciones/adjuntar); `false` = colapsado a solo el encabezado + botones. */
+  protected mostrarDetalle(respuestaId: number): boolean {
+    return !this.detalleColapsadoState().has(respuestaId);
+  }
+
+  protected alternarDetalleColapsado(respuestaId: number): void {
+    this.detalleColapsadoState.update((set) => {
+      const copia = new Set(set);
+      if (copia.has(respuestaId)) {
+        copia.delete(respuestaId);
+      } else {
+        copia.add(respuestaId);
+      }
+      return copia;
+    });
+  }
+
   protected quiereAdjuntarPrecarga(respuestaId: number): boolean {
     return this.quiereAdjuntarPrecargaState().has(respuestaId);
   }
@@ -410,6 +441,15 @@ export class InventarioPage implements OnInit, OnDestroy {
    */
   protected decidirPrecarga(respuesta: RespuestaMaterial, estado: EstadoPrecarga): void {
     this.errorPrecarga.set(null);
+    // Cambiar de opinión (o simplemente reafirmarla) siempre muestra el
+    // detalle de nuevo -- así el técnico ve de una vez los campos del modo
+    // al que acaba de cambiar, en vez de tener que pulsar "Editar" aparte.
+    this.detalleColapsadoState.update((set) => {
+      if (!set.has(respuesta.id)) return set;
+      const copia = new Set(set);
+      copia.delete(respuesta.id);
+      return copia;
+    });
 
     if (estado === 'ya_no_lo_tiene') {
       this.alternarAdjuntarPrecarga(respuesta.id, false);

@@ -59,9 +59,45 @@ export class RespuestasService {
   });
 
   public cargarMisRespuestas(): Observable<RespuestaMaterial[]> {
-    return this.http
-      .get<RespuestaMaterial[]>(`${environment.apiBaseUrl}/mis-respuestas`)
-      .pipe(tap((respuestas) => this.misRespuestasState.set(respuestas)));
+    return this.http.get<RespuestaMaterial[]>(`${environment.apiBaseUrl}/mis-respuestas`).pipe(
+      tap((respuestas) => {
+        this.misRespuestasState.set(respuestas);
+        this.sembrarDecisionesDesdeServidor(respuestas);
+      }),
+    );
+  }
+
+  /**
+   * Si un intento anterior llegó a mandar el `PATCH` de un ítem precargado
+   * (`enviarDecisionesPrecarga`) pero la confirmación global nunca se
+   * completó (ej. el técnico cerró la app a mitad de camino, o falló la
+   * red justo después), ese ítem queda con `estadoPrecarga` ya escrito en
+   * la BD -- pero el mapa local de decisiones arranca vacío en cada carga
+   * de página, así que sin esto el técnico tendría que repetir TODO desde
+   * cero. Acá se "recupera" esa respuesta ya persistida, pero SOLO si
+   * todavía no hay una decisión local para ese id, para no pisar algo que
+   * ya esté editando en esta misma sesión.
+   */
+  private sembrarDecisionesDesdeServidor(respuestas: RespuestaMaterial[]): void {
+    const yaValidados = respuestas.filter(
+      (respuesta) => respuesta.origen === 'precargado' && respuesta.estadoPrecarga !== null,
+    );
+    if (yaValidados.length === 0) return;
+
+    this.decisionesPrecargaState.update((mapa) => {
+      let copia: Map<number, DecisionPrecargaLocal> | null = null;
+      for (const respuesta of yaValidados) {
+        if (mapa.has(respuesta.id)) continue;
+        copia ??= new Map(mapa);
+        copia.set(respuesta.id, {
+          estado: respuesta.estadoPrecarga as EstadoPrecarga,
+          cantidad: respuesta.cantidad,
+          serial: respuesta.serial,
+          observaciones: respuesta.observaciones,
+        });
+      }
+      return copia ?? mapa;
+    });
   }
 
   public guardarRespuesta(

@@ -65,13 +65,17 @@
                 </span>
 
                 <span class="inventario__precarga-botones">
-                  @if (decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene') {
-                    <span class="badge badge--advertencia">Ya no lo tienes</span>
+                  @if (decisionPrecarga(respuesta.id); as decision) {
+                    @if (decision.estado === 'ya_no_lo_tiene') {
+                      <span class="badge badge--advertencia">Ya no lo tienes</span>
+                    } @else {
+                      <span class="badge badge--exito">
+                        <span aria-hidden="true">✓</span> Guardado · {{ decision.cantidad }} {{ respuesta.material.unidadMedida }}
+                      </span>
+                    }
                   } @else if (eligiendoNegativa(respuesta.id)) {
                     <span class="badge badge--advertencia">Falta explicar por qué</span>
-                  } @else if (
-                    precargaExpandida(respuesta.id) && coincideSerial(respuesta.id) === false && !decisionPrecarga(respuesta.id)
-                  ) {
+                  } @else if (precargaExpandida(respuesta.id) && coincideSerial(respuesta.id) === false) {
                     <span class="badge badge--advertencia">Falta el serial real</span>
                   }
                   <button
@@ -92,10 +96,19 @@
                   >
                     <span aria-hidden="true">✕</span> Ya no lo tengo
                   </button>
+                  @if (puedeColapsarDetalle(respuesta.id)) {
+                    <button
+                      class="btn btn--texto"
+                      type="button"
+                      (click)="alternarDetalleColapsado(respuesta.id)"
+                    >
+                      {{ mostrarDetalle(respuesta.id) ? 'Ocultar detalle ▲' : 'Editar ▾' }}
+                    </button>
+                  }
                 </span>
               </div>
 
-              @if (precargaExpandida(respuesta.id)) {
+              @if (precargaExpandida(respuesta.id) && mostrarDetalle(respuesta.id)) {
                 <div class="inventario__precarga-detalle">
                   <div class="inventario__precarga-campos">
                     <label class="field">
@@ -223,7 +236,7 @@
                     </div>
                   }
                 </div>
-              } @else if (eligiendoNegativa(respuesta.id)) {
+              } @else if (eligiendoNegativa(respuesta.id) && mostrarDetalle(respuesta.id)) {
                 <div class="inventario__precarga-detalle inventario__precarga-detalle--negativo">
                   <label class="field">
                     <span>Observaciones <span class="inventario__requerido">(obligatorias)</span></span>

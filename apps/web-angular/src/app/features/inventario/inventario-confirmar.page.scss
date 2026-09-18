@@ -27,3 +27,27 @@
   justify-content: flex-end;
   gap: 12px;
 }
+
+/**
+ * En celular la tabla es más ancha que la pantalla (varias columnas de
+ * texto largo) -- se desliza horizontalmente DENTRO de este contenedor en
+ * vez de desbordar toda la página.
+ */
+.confirmar__tabla-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+}
+
+.confirmar__tabla-scroll .table {
+  min-width: 640px;
+}
+
+@media (max-width: 640px) {
+  .confirmar__acciones {
+    flex-direction: column-reverse;
+  }
+
+  .confirmar__acciones .btn {
+    width: 100%;
+  }
+}
