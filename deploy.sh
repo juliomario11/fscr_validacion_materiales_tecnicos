@@ -22,7 +22,12 @@ cd "$APP_DIR"
 
 echo "== 1/8 Trayendo ultima version =="
 git fetch origin
-git checkout -B main origin/main
+# reset --hard (no checkout -B): este directorio es SOLO de despliegue, el
+# servidor nunca debe tener cambios propios. checkout -B aborta si hay
+# modificaciones locales sin commitear (ej. package-lock.json regenerado
+# por un `npm install` con otra version de npm) -- reset --hard las
+# descarta sin preguntar, que es lo correcto aqui.
+git reset --hard origin/main
 
 echo "== 2/8 Verificando apps/api/.env =="
 if [ ! -f apps/api/.env ]; then
