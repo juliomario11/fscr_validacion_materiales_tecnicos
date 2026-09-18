@@ -71,7 +71,12 @@ export class MaterializarPrecargaUseCase {
         empleadoId,
         materialId: material.id,
         serial: raw.serial,
-        cantidadPrecargada: raw.cantidad,
+        // El cron externo no siempre trae "cantidad" poblada (columna en
+        // blanco/0 en el archivo de origen, sobre todo para ítems
+        // serializados donde cada fila ya representa una unidad) -- que
+        // exista la fila significa que el empleado tiene AL MENOS 1, nunca
+        // 0, así que ese es el mínimo por defecto en vez de propagar el 0.
+        cantidadPrecargada: raw.cantidad && raw.cantidad > 0 ? raw.cantidad : 1,
         serialPrecargadoId: raw.id,
         fueraDeFecha,
       });
