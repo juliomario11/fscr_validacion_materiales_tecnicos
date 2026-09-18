@@ -26,22 +26,34 @@
 
 .admin__nav {
   display: flex;
-  gap: 14px;
+  gap: 8px;
 }
 
 .admin__nav-link {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 13.5px;
   text-decoration: none;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .admin__nav-link:hover {
+  border-color: var(--brand);
   color: var(--brand);
 }
 
-.admin__nav-link--activo {
-  color: var(--brand);
+.admin__nav-link--activo,
+.admin__nav-link--activo:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
 }
 
 .admin__tabla {
