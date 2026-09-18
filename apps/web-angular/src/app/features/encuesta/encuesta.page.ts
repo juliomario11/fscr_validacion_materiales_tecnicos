@@ -136,7 +136,19 @@ export class EncuestaPage implements OnInit, OnDestroy {
     };
 
     this.materialesService.cargarCatalogo().subscribe({ next: onDone, error: onError });
-    this.respuestasService.cargarMisRespuestas().subscribe({ next: onDone, error: onError });
+    this.respuestasService.cargarMisRespuestas().subscribe({
+      next: () => {
+        // Ya confirmó todo (sin nada en borrador) -- ej. vuelve a loguearse
+        // con su cédula tiempo después. Se le muestra de una vez lo que ya
+        // cargó, en vez del catálogo para seleccionar materiales.
+        if (this.respuestasService.borrador().length === 0 && this.respuestasService.confirmadas().length > 0) {
+          void this.router.navigateByUrl('/encuesta/gracias');
+          return;
+        }
+        onDone();
+      },
+      error: onError,
+    });
   }
 
   protected seleccionarMaterial(material: Material): void {

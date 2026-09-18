@@ -14,8 +14,11 @@
   text-align: center;
 }
 
-.gracias__logo {
-  margin: 0 auto;
+.gracias__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .gracias__card h1 {
@@ -25,4 +28,21 @@
 
 .gracias__card table {
   text-align: left;
+}
+
+.gracias__aviso {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.gracias__aviso p {
+  margin: 0;
+}
+
+.gracias__aviso-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
 }

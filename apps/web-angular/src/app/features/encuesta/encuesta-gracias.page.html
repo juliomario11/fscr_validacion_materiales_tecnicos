@@ -1,11 +1,31 @@
 <main class="gracias">
   <section class="card gracias__card">
-    <img src="logo-fscr.png" alt="FSCR" class="brand-logo brand-logo--lg gracias__logo" />
+    <header class="gracias__header">
+      <img src="logo-fscr.png" alt="FSCR" class="brand-logo brand-logo--lg gracias__logo" />
+      <button class="btn btn--ghost gracias__cerrar-sesion" type="button" (click)="cerrarSesion()">
+        Cerrar sesión
+      </button>
+    </header>
     <h1>¡Gracias por responder la encuesta!</h1>
     @if (auth.user(); as usuario) {
       <p>{{ usuario.nombreCompleto }}, tu respuesta quedó registrada correctamente.</p>
     } @else {
       <p>Tu respuesta quedó registrada correctamente.</p>
+    }
+
+    @if (!cargando()) {
+      @if (segundosRestantes(); as segundos) {
+        <div class="alert alert--warning gracias__aviso" role="alert">
+          <p>
+            Por seguridad, tu sesión se cerrará automáticamente en
+            <strong>{{ segundos }}s</strong> si no respondes.
+          </p>
+          <div class="gracias__aviso-acciones">
+            <button class="btn btn--ghost" type="button" (click)="seguirAqui()">No, quiero revisar</button>
+            <button class="btn btn--primary" type="button" (click)="cerrarSesion()">Cerrar sesión ahora</button>
+          </div>
+        </div>
+      }
     }
 
     @if (cargando()) {
