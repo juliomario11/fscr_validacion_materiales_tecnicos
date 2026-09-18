@@ -60,6 +60,9 @@ export class AdminRespuestasPage implements OnInit, OnDestroy {
       serialConDiscrepancia: todas.filter(
         (respuesta) => !!respuesta.serialSistema && !!respuesta.serial && respuesta.serialSistema !== respuesta.serial,
       ).length,
+      cantidadConDiscrepancia: todas.filter(
+        (respuesta) => respuesta.cantidadPrecargada !== null && respuesta.cantidad !== respuesta.cantidadPrecargada,
+      ).length,
       fueraDeFecha: todas.filter((respuesta) => respuesta.fueraDeFecha).length,
     };
   });
@@ -193,6 +196,10 @@ export class AdminRespuestasPage implements OnInit, OnDestroy {
                   : 'Sin validar',
         },
         { header: 'Cantidad precargada (cron)', value: (fila) => fila.cantidadPrecargada },
+        {
+          header: 'Diferencia de cantidad',
+          value: (fila) => (fila.cantidadPrecargada !== null ? fila.cantidad - fila.cantidadPrecargada : null),
+        },
         { header: 'Estado', value: (fila) => (fila.estado === 'confirmado' ? 'Confirmado' : 'Borrador') },
         { header: 'Fuera de fecha', value: (fila) => (fila.fueraDeFecha ? 'Sí' : 'No') },
         { header: 'Adjuntos', value: (fila) => fila.cantidadAdjuntos },

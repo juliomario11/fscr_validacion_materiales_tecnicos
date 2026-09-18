@@ -345,6 +345,20 @@ export class InventarioPage implements OnInit, OnDestroy {
     this.reafirmarDecisionSiConfirmado(respuesta);
   }
 
+  /**
+   * Bloquea la tecla/caracter ANTES de que llegue a insertarse -- el
+   * sanitizado de `establecerCantidadPrecarga` (sobre el valor ya
+   * insertado) es un respaldo, pero en varios teclados de celular con
+   * texto predictivo el carácter llega a verse un instante antes de
+   * corregirse. `beforeinput` sí lo dispara tanto el teclado físico como
+   * el virtual, a diferencia de `keydown`.
+   */
+  protected bloquearEntradaNoNumerica(event: InputEvent): void {
+    if (event.data && /[^0-9]/.test(event.data)) {
+      event.preventDefault();
+    }
+  }
+
   /** `true`/`false` si ya respondió, `null` si todavía no -- silencio se trata como "coincide" (no se corrige nada). */
   protected coincideSerial(respuestaId: number): boolean | null {
     return this.coincideSerialState().get(respuestaId) ?? null;

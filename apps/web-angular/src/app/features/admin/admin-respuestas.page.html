@@ -47,6 +47,10 @@
         <span class="admin__resumen-etiqueta">Serial con discrepancia</span>
       </div>
       <div class="admin__resumen-chip admin__resumen-chip--peligro">
+        <span class="admin__resumen-numero">{{ resumen().cantidadConDiscrepancia }}</span>
+        <span class="admin__resumen-etiqueta">Cantidad con discrepancia</span>
+      </div>
+      <div class="admin__resumen-chip admin__resumen-chip--peligro">
         <span class="admin__resumen-numero">{{ resumen().fueraDeFecha }}</span>
         <span class="admin__resumen-etiqueta">Fuera de fecha</span>
       </div>
@@ -77,7 +81,8 @@
             <tr>
               <th>Empleado</th>
               <th>Material</th>
-              <th>Cantidad</th>
+              <th>Cantidad (sistema)</th>
+              <th>Cantidad (reportada)</th>
               <th>Serial (sistema)</th>
               <th>Serial (reportado)</th>
               <th>Observaciones</th>
@@ -93,7 +98,22 @@
             <tr>
               <td>{{ respuesta.empleado.nombreCompleto }} ({{ respuesta.empleado.cedula }})</td>
               <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
-              <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+              <td>
+                {{ respuesta.cantidadPrecargada !== null ? respuesta.cantidadPrecargada + ' ' + respuesta.material.unidadMedida : '—' }}
+              </td>
+              <td>
+                {{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}
+                @if (respuesta.cantidadPrecargada !== null && respuesta.cantidad !== respuesta.cantidadPrecargada) {
+                  <br />
+                  <span class="badge badge--advertencia">
+                    @if (respuesta.cantidad < respuesta.cantidadPrecargada) {
+                      Faltan {{ respuesta.cantidadPrecargada - respuesta.cantidad }}
+                    } @else {
+                      Sobran {{ respuesta.cantidad - respuesta.cantidadPrecargada }}
+                    }
+                  </span>
+                }
+              </td>
               <td>{{ respuesta.serialSistema || '—' }}</td>
               <td>
                 {{ respuesta.serial || '—' }}
@@ -170,7 +190,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="11">
+              <td colspan="12">
                 {{ filtroTexto().trim() ? 'Ninguna respuesta coincide con la búsqueda.' : 'No hay respuestas registradas.' }}
               </td>
             </tr>

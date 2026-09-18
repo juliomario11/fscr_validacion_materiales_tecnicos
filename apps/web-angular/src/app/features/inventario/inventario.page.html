@@ -102,7 +102,7 @@
                       type="button"
                       (click)="alternarDetalleColapsado(respuesta.id)"
                     >
-                      {{ mostrarDetalle(respuesta.id) ? 'Ocultar detalle ▲' : 'Editar ▾' }}
+                      {{ mostrarDetalle(respuesta.id) ? 'Ocultar detalle ▲' : 'Ver detalle ▾' }}
                     </button>
                   }
                 </span>
@@ -112,12 +112,13 @@
                 <div class="inventario__precarga-detalle">
                   <div class="inventario__precarga-campos">
                     <label class="field">
-                      <span>Cantidad</span>
+                      <span>Cantidad ({{ respuesta.material.unidadMedida }})</span>
                       <input
                         type="text"
                         inputmode="numeric"
                         pattern="[0-9]*"
                         [ngModel]="cantidadPrecarga(respuesta.id)"
+                        (beforeinput)="bloquearEntradaNoNumerica($event)"
                         (ngModelChange)="establecerCantidadPrecarga(respuesta, $event)"
                       />
                     </label>
