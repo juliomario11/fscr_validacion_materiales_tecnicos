@@ -6,3 +6,7 @@ coverage/
 *.log
 .DS_Store
 .angular/
+
+# Datos de RRHH reales (113 empleados) -- nunca debe subirse al repo
+Personal_Completo.xlsx
+~$Personal_Completo.xlsx

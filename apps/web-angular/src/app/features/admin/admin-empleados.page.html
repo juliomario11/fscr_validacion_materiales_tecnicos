@@ -1,11 +1,14 @@
 <main class="admin">
   <header class="admin__header">
-    <div>
-      <h1>Panel de administración</h1>
-      <nav class="admin__nav">
-        <a routerLink="/admin/empleados" class="admin__nav-link admin__nav-link--activo">Empleados</a>
-        <a routerLink="/admin/respuestas" class="admin__nav-link">Respuestas</a>
-      </nav>
+    <div class="admin__header-titulo">
+      <img src="logo-fscr.png" alt="FSCR" class="brand-logo" />
+      <div>
+        <h1>Panel de administración</h1>
+        <nav class="admin__nav">
+          <a routerLink="/admin/empleados" class="admin__nav-link admin__nav-link--activo">Empleados</a>
+          <a routerLink="/admin/respuestas" class="admin__nav-link">Respuestas</a>
+        </nav>
+      </div>
     </div>
     <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
   </header>

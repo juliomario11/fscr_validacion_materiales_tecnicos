@@ -13,6 +13,12 @@
   gap: 16px;
 }
 
+.admin__header-titulo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .admin__header h1 {
   margin: 0 0 8px;
   font-size: 1.3rem;

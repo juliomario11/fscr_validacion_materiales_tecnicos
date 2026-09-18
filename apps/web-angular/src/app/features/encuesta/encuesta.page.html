@@ -1,15 +1,18 @@
 <main class="encuesta">
   <header class="encuesta__header">
-    <div>
-      <h1>Encuesta de materiales y herramientas</h1>
-      @if (auth.user(); as usuario) {
-        <p>
-          Hola, <strong>{{ usuario.nombreCompleto }}</strong> (cédula {{ usuario.cedula }})
-          @if (metaEmpleado(); as meta) {
-            <span class="encuesta__meta"> — {{ meta }}</span>
-          }
-        </p>
-      }
+    <div class="encuesta__header-titulo">
+      <img src="logo-fscr.png" alt="FSCR" class="brand-logo" />
+      <div>
+        <h1>Encuesta de materiales y herramientas</h1>
+        @if (auth.user(); as usuario) {
+          <p>
+            Hola, <strong>{{ usuario.nombreCompleto }}</strong> (cédula {{ usuario.cedula }})
+            @if (metaEmpleado(); as meta) {
+              <span class="encuesta__meta"> — {{ meta }}</span>
+            }
+          </p>
+        }
+      </div>
     </div>
     <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
   </header>
@@ -111,7 +114,10 @@
 
           @if (respuestaSeleccionada(); as respuesta) {
             <div class="encuesta__evidencias">
-              <h3>Evidencias adjuntas</h3>
+              <h3>Evidencias adjuntas <span class="encuesta__opcional">(opcional)</span></h3>
+              <p class="encuesta__opcional-texto">
+                Adjuntar una foto o PDF es opcional -- puedes continuar sin adjuntar nada.
+              </p>
 
               @if (respuesta.adjuntos?.length) {
                 <ul class="encuesta__adjuntos-lista">
@@ -147,7 +153,7 @@
               }
 
               <label class="field">
-                <span>Adjuntar otra evidencia (foto o PDF)</span>
+                <span>Adjuntar evidencia (opcional -- foto o PDF)</span>
                 <input #archivoInput type="file" accept="image/*,.pdf" (change)="onArchivoSeleccionado($event)" />
               </label>
               @if (archivo(); as archivoSeleccionado) {
@@ -168,7 +174,9 @@
               </button>
             </div>
           } @else {
-            <p class="encuesta__sin-adjuntos">Guarda la cantidad primero para poder adjuntar evidencias.</p>
+            <p class="encuesta__sin-adjuntos">
+              Guarda la cantidad primero para poder adjuntar evidencias (foto o PDF, opcional).
+            </p>
           }
         } @else {
           <p>Selecciona un material de la lista para registrar la cantidad que tienes.</p>

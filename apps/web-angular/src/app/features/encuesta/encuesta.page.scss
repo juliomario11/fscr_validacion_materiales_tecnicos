@@ -13,6 +13,12 @@
   gap: 16px;
 }
 
+.encuesta__header-titulo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .encuesta__header h1 {
   margin: 0 0 4px;
   font-size: 1.3rem;
@@ -159,6 +165,18 @@
 .encuesta__evidencias h3 {
   margin: 0;
   font-size: 0.9rem;
+}
+
+.encuesta__opcional {
+  color: var(--text-soft);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.encuesta__opcional-texto {
+  margin: -4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .encuesta__sin-adjuntos {
