@@ -45,99 +45,122 @@
                     <small>Serial del sistema: {{ respuesta.serialSistema }}</small>
                   }
                 </span>
-                @if (decisionPrecarga(respuesta.id); as decision) {
-                  @if (decision.estado === 'confirmado') {
-                    <span class="badge badge--exito">Dijiste que tienes {{ decision.cantidad }} unidad(es)</span>
-                  } @else {
-                    <span class="badge badge--advertencia">Dijiste que ya no lo tienes</span>
+
+                <span class="inventario__precarga-botones">
+                  @if (decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene') {
+                    <span class="badge badge--advertencia">Ya no lo tienes</span>
                   }
-                }
+                  <button
+                    class="btn"
+                    type="button"
+                    [class.btn--primary]="precargaExpandida(respuesta.id)"
+                    [class.btn--ghost]="!precargaExpandida(respuesta.id)"
+                    (click)="decidirPrecarga(respuesta, 'confirmado')"
+                  >
+                    Sí, lo tengo
+                  </button>
+                  <button
+                    class="btn"
+                    type="button"
+                    [class.btn--danger]="decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene'"
+                    [class.btn--ghost]="decisionPrecarga(respuesta.id)?.estado !== 'ya_no_lo_tiene'"
+                    (click)="decidirPrecarga(respuesta, 'ya_no_lo_tiene')"
+                  >
+                    Ya no lo tengo
+                  </button>
+                </span>
               </div>
 
-              <div class="inventario__precarga-campos">
-                <label class="field">
-                  <span>Cantidad que tienes</span>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    [ngModel]="cantidadPrecarga(respuesta.id)"
-                    (ngModelChange)="establecerCantidadPrecarga(respuesta.id, $event)"
-                  />
-                </label>
+              @if (precargaExpandida(respuesta.id)) {
+                <div class="inventario__precarga-detalle">
+                  <div class="inventario__precarga-campos">
+                    <label class="field">
+                      <span>Cantidad</span>
+                      <input
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        [ngModel]="cantidadPrecarga(respuesta.id)"
+                        (ngModelChange)="establecerCantidadPrecarga(respuesta, $event)"
+                      />
+                    </label>
 
-                <label class="field">
-                  <span>Corregir serial (opcional)</span>
-                  <input
-                    type="text"
-                    [ngModel]="serialPrecarga(respuesta)"
-                    (ngModelChange)="establecerSerialPrecarga(respuesta.id, $event)"
-                  />
-                </label>
+                    <label class="field">
+                      <span>Corregir serial (opcional)</span>
+                      <input
+                        type="text"
+                        [ngModel]="serialPrecarga(respuesta)"
+                        (ngModelChange)="establecerSerialPrecarga(respuesta, $event)"
+                      />
+                    </label>
+                  </div>
 
-                <label class="field">
-                  <span>Observaciones (opcional)</span>
-                  <textarea
-                    rows="2"
-                    [ngModel]="observacionesPrecargaValor(respuesta.id)"
-                    (ngModelChange)="establecerObservacionesPrecarga(respuesta.id, $event)"
-                  ></textarea>
-                </label>
-              </div>
+                  <label class="field">
+                    <span>Observaciones (opcional)</span>
+                    <textarea
+                      rows="2"
+                      [ngModel]="observacionesPrecargaValor(respuesta.id)"
+                      (ngModelChange)="establecerObservacionesPrecarga(respuesta, $event)"
+                    ></textarea>
+                  </label>
 
-              <div class="inventario__precarga-adjuntos">
-                @if (respuesta.adjuntos?.length) {
-                  <ul class="inventario__adjuntos-lista">
-                    @for (adjunto of respuesta.adjuntos; track adjunto.id) {
-                      <li class="inventario__adjunto-item">
-                        <span class="inventario__adjunto-nombre">
-                          {{ adjunto.nombreArchivo }}
-                          <small>{{ adjunto.subidoEn | date: 'short' }}</small>
-                        </span>
-                        <span class="inventario__adjunto-acciones">
-                          <button
-                            class="btn btn--ghost"
-                            type="button"
-                            [disabled]="procesandoAdjuntoId() === adjunto.id"
-                            (click)="verAdjunto(adjunto)"
-                          >
-                            Ver
-                          </button>
-                          <button
-                            class="btn btn--ghost"
-                            type="button"
-                            [disabled]="procesandoAdjuntoId() === adjunto.id"
-                            (click)="descargarAdjunto(adjunto)"
-                          >
-                            Descargar
-                          </button>
-                        </span>
-                      </li>
-                    }
-                  </ul>
-                }
-                <label class="field">
-                  <span>Adjuntar evidencia (opcional -- foto o PDF)</span>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    [disabled]="subiendoAdjuntoPrecargaId() === respuesta.id"
-                    (change)="onArchivoPrecargaSeleccionado(respuesta, $event)"
-                  />
-                </label>
-                @if (subiendoAdjuntoPrecargaId() === respuesta.id) {
-                  <p class="inventario__archivo">Subiendo archivo...</p>
-                }
-              </div>
+                  <label class="inventario__precarga-checkbox">
+                    <input
+                      type="checkbox"
+                      [checked]="quiereAdjuntarPrecarga(respuesta.id)"
+                      (change)="alternarAdjuntarPrecarga(respuesta.id, $any($event.target).checked)"
+                    />
+                    <span>¿Deseas adjuntar un archivo?</span>
+                  </label>
 
-              <div class="inventario__precarga-acciones">
-                <button class="btn btn--primary" type="button" (click)="decidirPrecarga(respuesta, 'confirmado')">
-                  Sí, lo tengo
-                </button>
-                <button class="btn btn--danger" type="button" (click)="decidirPrecarga(respuesta, 'ya_no_lo_tiene')">
-                  Ya no lo tengo
-                </button>
-              </div>
+                  @if (quiereAdjuntarPrecarga(respuesta.id)) {
+                    <div class="inventario__precarga-adjuntos">
+                      @if (respuesta.adjuntos?.length) {
+                        <ul class="inventario__adjuntos-lista">
+                          @for (adjunto of respuesta.adjuntos; track adjunto.id) {
+                            <li class="inventario__adjunto-item">
+                              <span class="inventario__adjunto-nombre">
+                                {{ adjunto.nombreArchivo }}
+                                <small>{{ adjunto.subidoEn | date: 'short' }}</small>
+                              </span>
+                              <span class="inventario__adjunto-acciones">
+                                <button
+                                  class="btn btn--ghost"
+                                  type="button"
+                                  [disabled]="procesandoAdjuntoId() === adjunto.id"
+                                  (click)="verAdjunto(adjunto)"
+                                >
+                                  Ver
+                                </button>
+                                <button
+                                  class="btn btn--ghost"
+                                  type="button"
+                                  [disabled]="procesandoAdjuntoId() === adjunto.id"
+                                  (click)="descargarAdjunto(adjunto)"
+                                >
+                                  Descargar
+                                </button>
+                              </span>
+                            </li>
+                          }
+                        </ul>
+                      }
+                      <label class="field">
+                        <span>Adjuntar evidencia (foto o PDF)</span>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          [disabled]="subiendoAdjuntoPrecargaId() === respuesta.id"
+                          (change)="onArchivoPrecargaSeleccionado(respuesta, $event)"
+                        />
+                      </label>
+                      @if (subiendoAdjuntoPrecargaId() === respuesta.id) {
+                        <p class="inventario__archivo">Subiendo archivo...</p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
             </li>
           }
         </ul>

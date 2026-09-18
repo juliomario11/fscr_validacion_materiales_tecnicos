@@ -63,6 +63,8 @@ export class InventarioPage implements OnInit, OnDestroy {
   private readonly cantidadesPrecarga = signal<ReadonlyMap<number, number>>(new Map());
   private readonly serialesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
   private readonly observacionesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
+  /** Ids de ítems precargados donde el técnico marcó el check "¿Deseas adjuntar un archivo?" -- solo ahí se muestra el `<input type="file">`. */
+  private readonly quiereAdjuntarPrecargaState = signal<ReadonlySet<number>>(new Set());
 
   protected readonly previewNombre = signal<string | null>(null);
   protected readonly previewTipo = signal<TipoPreview | null>(null);
@@ -296,8 +298,17 @@ export class InventarioPage implements OnInit, OnDestroy {
     return this.cantidadesPrecarga().get(respuestaId) ?? 1;
   }
 
-  protected establecerCantidadPrecarga(respuestaId: number, valor: number): void {
-    this.cantidadesPrecarga.update((mapa) => new Map(mapa).set(respuestaId, valor));
+  /**
+   * Solo dígitos -- sin signo, sin punto decimal, sin notación científica.
+   * `type="text" inputmode="numeric"` en vez de `type="number"` porque un
+   * `<input type="number">` sigue dejando teclear "-"/"."/"e" aunque tenga
+   * `min`/`step`; acá se limpia el valor tecleado carácter por carácter.
+   */
+  protected establecerCantidadPrecarga(respuesta: RespuestaMaterial, valorCrudo: string | number): void {
+    const soloDigitos = String(valorCrudo).replace(/[^0-9]/g, '');
+    const valor = soloDigitos === '' ? 0 : parseInt(soloDigitos, 10);
+    this.cantidadesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, valor));
+    this.reafirmarDecisionSiConfirmado(respuesta);
   }
 
   /** Por defecto, el serial vigente que ya trae la fila (igual al del sistema mientras no se corrija). */
@@ -305,46 +316,83 @@ export class InventarioPage implements OnInit, OnDestroy {
     return this.serialesPrecarga().get(respuesta.id) ?? respuesta.serial ?? '';
   }
 
-  protected establecerSerialPrecarga(respuestaId: number, valor: string): void {
-    this.serialesPrecarga.update((mapa) => new Map(mapa).set(respuestaId, valor));
+  protected establecerSerialPrecarga(respuesta: RespuestaMaterial, valor: string): void {
+    this.serialesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, valor));
+    this.reafirmarDecisionSiConfirmado(respuesta);
   }
 
   protected observacionesPrecargaValor(respuestaId: number): string {
     return this.observacionesPrecarga().get(respuestaId) ?? '';
   }
 
-  protected establecerObservacionesPrecarga(respuestaId: number, valor: string): void {
-    this.observacionesPrecarga.update((mapa) => new Map(mapa).set(respuestaId, valor));
+  protected establecerObservacionesPrecarga(respuesta: RespuestaMaterial, valor: string): void {
+    this.observacionesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, valor));
+    this.reafirmarDecisionSiConfirmado(respuesta);
   }
 
   protected decisionPrecarga(respuestaId: number) {
     return this.respuestasService.decisionPrecargaLocal(respuestaId);
   }
 
+  /** La sección de detalle (cantidad/serial/observaciones/adjuntar) solo se despliega una vez que el técnico dijo "sí, lo tengo" -- antes de eso solo se ven los dos botones. */
+  protected precargaExpandida(respuestaId: number): boolean {
+    return this.decisionPrecarga(respuestaId)?.estado === 'confirmado';
+  }
+
+  protected quiereAdjuntarPrecarga(respuestaId: number): boolean {
+    return this.quiereAdjuntarPrecargaState().has(respuestaId);
+  }
+
+  protected alternarAdjuntarPrecarga(respuestaId: number, marcado: boolean): void {
+    this.quiereAdjuntarPrecargaState.update((set) => {
+      const copia = new Set(set);
+      if (marcado) {
+        copia.add(respuestaId);
+      } else {
+        copia.delete(respuestaId);
+      }
+      return copia;
+    });
+  }
+
   /**
    * El técnico (o el supervisor, en la misma sesión) valida un ítem
-   * precargado puntual: "sí lo tengo" (con la cantidad real, el serial
-   * corregido si aplica, y observaciones) o "ya no lo tengo". Esto SOLO
-   * queda en memoria (`RespuestasService.establecerDecisionPrecargaLocal`)
-   * -- nada se escribe en la BD hasta confirmar el envío completo. Se
-   * puede cambiar de opinión llamando de nuevo con el otro estado.
+   * precargado puntual: "sí lo tengo" (revela cantidad/serial/observaciones,
+   * con cantidad=1 por defecto) o "ya no lo tengo" (colapsa cualquier
+   * detalle que se hubiera abierto). Esto SOLO queda en memoria
+   * (`RespuestasService.establecerDecisionPrecargaLocal`) -- nada se
+   * escribe en la BD hasta confirmar el envío completo. Se puede cambiar de
+   * opinión pulsando el otro botón en cualquier momento.
    */
   protected decidirPrecarga(respuesta: RespuestaMaterial, estado: EstadoPrecarga): void {
     this.errorPrecarga.set(null);
 
     if (estado === 'ya_no_lo_tiene') {
       this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, { estado, cantidad: 0 });
+      this.alternarAdjuntarPrecarga(respuesta.id, false);
       return;
     }
 
+    if (!this.cantidadesPrecarga().has(respuesta.id)) {
+      this.cantidadesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, 1));
+    }
+    this.guardarDecisionConfirmado(respuesta);
+  }
+
+  /** Si el ítem ya está "confirmado", cada cambio en cantidad/serial/observaciones re-guarda la decisión local al vuelo -- así no hace falta un botón "Guardar" aparte para esos campos. */
+  private reafirmarDecisionSiConfirmado(respuesta: RespuestaMaterial): void {
+    if (this.decisionPrecarga(respuesta.id)?.estado !== 'confirmado') return;
+    this.guardarDecisionConfirmado(respuesta);
+  }
+
+  private guardarDecisionConfirmado(respuesta: RespuestaMaterial): void {
     const cantidad = this.cantidadPrecarga(respuesta.id);
     if (!cantidad || cantidad < 1) {
-      this.errorPrecarga.set('Ingresa una cantidad válida (mínimo 1) antes de confirmar.');
+      this.errorPrecarga.set('Ingresa una cantidad válida (mínimo 1).');
       return;
     }
-
     this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, {
-      estado,
+      estado: 'confirmado',
       cantidad,
       serial: this.serialPrecarga(respuesta).trim() || null,
       observaciones: this.observacionesPrecargaValor(respuesta.id).trim() || null,

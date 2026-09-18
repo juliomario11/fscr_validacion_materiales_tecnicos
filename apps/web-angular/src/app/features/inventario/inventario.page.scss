@@ -60,10 +60,11 @@
 
 .inventario__precarga-item {
   display: grid;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 0;
+  padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  transition: background 160ms ease;
 }
 
 .inventario__precarga-encabezado {
@@ -78,6 +79,7 @@
   display: flex;
   flex-direction: column;
   font-weight: 600;
+  font-size: 13.5px;
 }
 
 .inventario__precarga-material small {
@@ -86,16 +88,52 @@
   font-size: 12px;
 }
 
+.inventario__precarga-botones {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inventario__precarga-botones .btn {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.inventario__precarga-detalle {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
 .inventario__precarga-campos {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 560px) {
   .inventario__precarga-campos {
     grid-template-columns: 1fr;
   }
+}
+
+.inventario__precarga-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.inventario__precarga-checkbox input {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
 }
 
 .inventario__precarga-adjuntos {
@@ -103,13 +141,6 @@
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
-}
-
-.inventario__precarga-acciones {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .inventario__agregar-mas {
