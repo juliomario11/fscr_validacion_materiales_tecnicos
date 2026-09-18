@@ -18,3 +18,7 @@ equipos_asignados_encuesta.xlsx
 
 # Lista de cédulas de prueba a reiniciar en Supabase, uso local del usuario
 borrar.txt
+
+# SQL de prueba generado a partir de equipos_asignados_encuesta.xlsx -- mismos
+# datos reales, nunca debe subirse al repo
+seed-materiales-precargados-raw.sql
