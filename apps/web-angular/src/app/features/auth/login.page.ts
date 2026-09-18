@@ -33,12 +33,12 @@ export class LoginPage {
 
     this.auth.login(cedula.trim()).subscribe({
       next: () => {
-        void this.router.navigateByUrl('/encuesta');
+        void this.router.navigateByUrl('/inventario');
       },
       error: (error: unknown) => {
         this.loading.set(false);
         if (error instanceof HttpErrorResponse && error.status === 401) {
-          this.errorMessage.set('Cédula no encontrada o sin acceso a la encuesta.');
+          this.errorMessage.set('Cédula no encontrada o sin acceso al inventario.');
         } else {
           this.errorMessage.set('No fue posible validar la cédula. Intenta nuevamente.');
         }

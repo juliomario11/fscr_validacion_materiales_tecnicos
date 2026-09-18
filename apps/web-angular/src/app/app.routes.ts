@@ -9,25 +9,25 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login.page').then((module) => module.LoginPage),
   },
   {
-    path: 'encuesta',
+    path: 'inventario',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/encuesta/encuesta.page').then((module) => module.EncuestaPage),
+      import('./features/inventario/inventario.page').then((module) => module.InventarioPage),
   },
   {
-    path: 'encuesta/confirmar',
+    path: 'inventario/confirmar',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/encuesta/encuesta-confirmar.page').then(
-        (module) => module.EncuestaConfirmarPage,
+      import('./features/inventario/inventario-confirmar.page').then(
+        (module) => module.InventarioConfirmarPage,
       ),
   },
   {
-    path: 'encuesta/gracias',
+    path: 'inventario/gracias',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/encuesta/encuesta-gracias.page').then(
-        (module) => module.EncuestaGraciasPage,
+      import('./features/inventario/inventario-gracias.page').then(
+        (module) => module.InventarioGraciasPage,
       ),
   },
   // Rutas del panel admin: sistema de auth completamente aparte (Bearer
@@ -53,10 +53,10 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'encuesta',
+    redirectTo: 'inventario',
   },
   {
     path: '**',
-    redirectTo: 'encuesta',
+    redirectTo: 'inventario',
   },
 ];

@@ -10,7 +10,7 @@ import { parseCookieHeader, SESSION_COOKIE_NAME } from '../utils/cookie.util';
  * Guard global (registrado como `APP_GUARD` en `AppModule`): "seguro por
  * defecto" -- cualquier endpoint nuevo queda protegido salvo que se marque
  * explícitamente `@Public()` (login, logout, health). Lee la cookie httpOnly
- * `fscr_encuesta_session`, verifica el JWT (`jose`) y adjunta
+ * `fscr_inventario_session`, verifica el JWT (`jose`) y adjunta
  * `request.empleado = { empleadoId, cedula }` para que los controllers lo
  * consuman vía `@CurrentEmpleado()` -- nunca confiar en un `empleadoId` que
  * venga del cliente (body/query/params).

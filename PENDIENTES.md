@@ -6,7 +6,7 @@ recién arrancado) — cuando crezca, adoptar el mismo estilo de
 
 ## Funcionales
 
-- **Reapertura de encuesta confirmada**: hoy `PUT/DELETE /mis-respuestas/:materialId`
+- **Reapertura de inventario confirmado**: hoy `PUT/DELETE /mis-respuestas/:materialId`
   responde 409 si la respuesta ya está `confirmado`. No hay forma de que un
   colaborador corrija un error después de enviar. Falta decidir si existe
   un mecanismo (ej. un admin la reabre) y quién puede activarlo.
@@ -14,12 +14,12 @@ recién arrancado) — cuando crezca, adoptar el mismo estilo de
   consulte qué declaró cada colaborador. Hoy solo es consultable por SQL
   directo en el schema `validacion_materiales_tecnicos` de Supabase.
 - **Limpieza de adjuntos huérfanos**: al eliminar una respuesta en borrador,
-  el `ON DELETE CASCADE` limpia la fila de `encuesta_adjuntos` en Supabase
+  el `ON DELETE CASCADE` limpia la fila de `inventario_adjuntos` en Supabase
   pero el archivo binario en disco (`DOCUMENTS_STORAGE_PATH` del servidor)
   queda huérfano. Ver `TODO` en
-  `apps/api/src/encuesta-materiales/application/use-case/eliminar-respuesta.use-case.ts`.
+  `apps/api/src/inventario-materiales/application/use-case/eliminar-respuesta.use-case.ts`.
 - **Sin backup del disco de adjuntos**: los archivos viven en
-  `/var/lib/fscr/adjuntos_encuesta_tecnicos` en el servidor Ubuntu real, sin
+  `/var/lib/fscr/adjuntos_inventario_tecnicos` en el servidor Ubuntu real, sin
   ningún respaldo automatizado -- si se pierde ese disco, se pierden todas
   las fotos/soportes subidos (la metadata en Supabase sobrevive, los
   binarios no). Mismo riesgo que ya está documentado para

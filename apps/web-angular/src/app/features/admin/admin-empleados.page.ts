@@ -49,7 +49,7 @@ export class AdminEmpleadosPage implements OnInit {
 
   protected exportar(): void {
     this.xlsxExport.exportToXlsx<AdminEmpleado>({
-      filename: `empleados-encuesta-materiales-${timestampArchivo()}`,
+      filename: `empleados-inventario-materiales-${timestampArchivo()}`,
       sheetName: 'Empleados',
       columns: [
         { header: 'Cédula', value: (fila) => fila.cedula },

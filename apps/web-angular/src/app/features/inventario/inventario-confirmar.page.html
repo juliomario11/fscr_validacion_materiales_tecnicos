@@ -1,0 +1,80 @@
+<main class="confirmar">
+  <header class="confirmar__header">
+    <div class="confirmar__header-titulo">
+      <img src="logo-fscr.png" alt="FSCR" class="brand-logo" />
+      <h1>Revisa tu selección</h1>
+    </div>
+    <p class="alert alert--warning" role="alert">
+      Revisa tu selección. Una vez confirmes el envío no podrás modificar estas respuestas.
+    </p>
+  </header>
+
+  @if (errorCarga()) {
+    <p class="alert alert--danger" role="alert">{{ errorCarga() }}</p>
+  }
+
+  @if (cargando()) {
+    <p>Cargando tu selección...</p>
+  } @else {
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th>Cantidad</th>
+          <th>Serial</th>
+          <th>Observaciones</th>
+          <th>Origen</th>
+          <th>Adjuntos</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (respuesta of respuestasService.borrador(); track respuesta.id) {
+          <tr>
+            <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+            <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+            <td>{{ respuesta.serial || '—' }}</td>
+            <td>{{ respuesta.observaciones || '—' }}</td>
+            <td>
+              @if (respuesta.origen === 'precargado') {
+                @if (respuesta.estadoPrecarga === 'confirmado') {
+                  Precargado · Confirmado
+                } @else if (respuesta.estadoPrecarga === 'ya_no_lo_tiene') {
+                  Precargado · Ya no lo tiene
+                } @else {
+                  Precargado · Sin validar
+                }
+              } @else {
+                Manual
+              }
+            </td>
+            <td>{{ respuesta.adjuntos?.length ? respuesta.adjuntos!.length : 0 }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (faltanPrecargadosPorValidar()) {
+      <p class="alert alert--warning" role="alert">
+        Todavía tienes ítems precargados sin validar. Vuelve a editar y confirma si los tienes o no antes de enviar.
+      </p>
+    }
+
+    @if (errorConfirmar()) {
+      <p class="alert alert--danger" role="alert">{{ errorConfirmar() }}</p>
+    }
+
+    <div class="confirmar__acciones">
+      <button class="btn btn--ghost" type="button" [disabled]="confirmando()" (click)="volverAEditar()">
+        Volver a editar
+      </button>
+      <button
+        class="btn btn--primary"
+        type="button"
+        [disabled]="confirmando() || faltanPrecargadosPorValidar()"
+        (click)="confirmarEnvio()"
+      >
+        {{ confirmando() ? 'Enviando...' : 'Confirmar y enviar' }}
+      </button>
+    </div>
+  }
+</main>

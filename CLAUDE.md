@@ -4,7 +4,7 @@ Guía para sesiones futuras de Claude Code en este repositorio.
 
 ## Qué es este proyecto
 
-Encuesta interna FSCR: ~113 técnicos de campo declaran qué materiales
+Inventario interno FSCR: ~113 técnicos de campo declaran qué materiales
 técnicos tienen en su poder, eligiendo de un catálogo cerrado de 358 ítems.
 Ver [`README.md`](README.md) para el flujo completo y [`ESTRUCTURA.md`](ESTRUCTURA.md)
 para el árbol de carpetas.
@@ -28,7 +28,7 @@ simplemente deshabilitar RLS.
 whitelist de empleados — su cobertura de estas cédulas específicas es baja
 y su identidad no está verificada (mismo hallazgo que
 `equipos_fscr.bodegas.responsable_usuario_legado` / EQM-34 en el proyecto
-hermano). La whitelist en `empleados_encuesta` viene directo del negocio.
+hermano). La whitelist en `empleados_inventario` viene directo del negocio.
 
 ## Decisiones ya tomadas (no las reabras sin que el usuario lo pida)
 
@@ -83,8 +83,8 @@ usuario lo confirme explícitamente.
 ## Adjuntos: filesystem del servidor, no Supabase Storage
 
 Decisión explícita del usuario (corrigiendo un supuesto inicial equivocado):
-los adjuntos de la encuesta se guardan en el **filesystem del servidor**
-(`DOCUMENTS_STORAGE_PATH`, `/var/lib/fscr/adjuntos_encuesta_tecnicos` en
+los adjuntos del inventario se guardan en el **filesystem del servidor**
+(`DOCUMENTS_STORAGE_PATH`, `/var/lib/fscr/adjuntos_inventario_tecnicos` en
 producción), con el mismo patrón de seguridad que
 `FilesystemDocumentStorage` de `fscr_proveedores_factura` (nombre de
 archivo seguro, extensión + mime real verificados con `file-type`, tamaño

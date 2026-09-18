@@ -4,10 +4,10 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { CommonModule } from './common/common.module';
 import { DomainExceptionsFilter } from './common/filters/domain-exceptions.filter';
 import { SessionAuthGuard } from './common/guards/session-auth.guard';
-import { EncuestaMaterialesModule } from './encuesta-materiales/encuesta-materiales.module';
+import { InventarioMaterialesModule } from './inventario-materiales/inventario-materiales.module';
 
 @Module({
-  imports: [CommonModule, EncuestaMaterialesModule],
+  imports: [CommonModule, InventarioMaterialesModule],
   providers: [
     // Guard global: "seguro por defecto" -- cualquier endpoint nuevo queda
     // protegido salvo que se marque explícitamente `@Public()` (ver

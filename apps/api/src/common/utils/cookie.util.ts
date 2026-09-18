@@ -1,5 +1,5 @@
 /** Nombre de la cookie httpOnly que transporta la sesión del empleado. */
-export const SESSION_COOKIE_NAME = 'fscr_encuesta_session';
+export const SESSION_COOKIE_NAME = 'fscr_inventario_session';
 
 /**
  * Parser mínimo de la cabecera HTTP `Cookie` (`"a=1; b=2"` -> `{a: '1', b: '2'}`).
