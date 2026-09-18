@@ -7,6 +7,7 @@ import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import { AdminRespuestasService } from '../../shared/services/admin-respuestas.service';
 import { XlsxExportService } from '../../shared/services/xlsx-export.service';
 import { formatFechaCorta } from '../../shared/utils/formato-fecha';
+import { timestampArchivo } from '../../shared/utils/timestamp-archivo';
 
 @Component({
   selector: 'app-admin-respuestas-page',
@@ -38,7 +39,7 @@ export class AdminRespuestasPage implements OnInit {
 
   protected exportar(): void {
     this.xlsxExport.exportToXlsx<AdminRespuesta>({
-      filename: 'respuestas-encuesta-materiales',
+      filename: `respuestas-encuesta-materiales-${timestampArchivo()}`,
       sheetName: 'Respuestas',
       columns: [
         { header: 'Cédula', value: (fila) => fila.empleado.cedula },

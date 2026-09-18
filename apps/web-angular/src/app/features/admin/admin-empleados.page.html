@@ -10,7 +10,12 @@
         </nav>
       </div>
     </div>
-    <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+    <div class="admin__header-acciones">
+      @if (adminAuth.usuario(); as usuarioAdmin) {
+        <span class="admin__usuario-actual">Conectado como <strong>{{ usuarioAdmin }}</strong></span>
+      }
+      <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+    </div>
   </header>
 
   @if (errorCarga()) {

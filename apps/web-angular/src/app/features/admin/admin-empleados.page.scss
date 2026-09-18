@@ -24,6 +24,17 @@
   font-size: 1.3rem;
 }
 
+.admin__header-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin__usuario-actual {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .admin__nav {
   display: flex;
   gap: 8px;

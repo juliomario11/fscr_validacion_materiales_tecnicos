@@ -7,6 +7,7 @@ import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import { AdminEmpleadosService } from '../../shared/services/admin-empleados.service';
 import { XlsxExportService } from '../../shared/services/xlsx-export.service';
 import { formatFechaCorta } from '../../shared/utils/formato-fecha';
+import { timestampArchivo } from '../../shared/utils/timestamp-archivo';
 
 const ESTADO_LABEL: Record<AdminEmpleado['estado'], string> = {
   sin_iniciar: 'Sin iniciar',
@@ -48,7 +49,7 @@ export class AdminEmpleadosPage implements OnInit {
 
   protected exportar(): void {
     this.xlsxExport.exportToXlsx<AdminEmpleado>({
-      filename: 'empleados-encuesta-materiales',
+      filename: `empleados-encuesta-materiales-${timestampArchivo()}`,
       sheetName: 'Empleados',
       columns: [
         { header: 'Cédula', value: (fila) => fila.cedula },
