@@ -47,8 +47,7 @@
           <p class="alert alert--danger" role="alert">{{ errorPrecarga() }}</p>
         }
 
-        <ul class="inventario__precarga-lista">
-          @for (respuesta of misPrecargados(); track respuesta.id) {
+        <ng-template #itemPrecarga let-respuesta="respuesta" let-compacto="compacto">
             <li
               class="inventario__precarga-item"
               [class.inventario__precarga-item--confirmado]="precargaExpandida(respuesta.id)"
@@ -58,9 +57,13 @@
             >
               <div class="inventario__precarga-encabezado">
                 <span class="inventario__precarga-material">
-                  [{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}
-                  @if (respuesta.serialSistema) {
-                    <small>Serial del sistema: <code>{{ respuesta.serialSistema }}</code></small>
+                  @if (compacto) {
+                    <span class="inventario__precarga-serial-compacto">Serial: <code>{{ respuesta.serialSistema }}</code></span>
+                  } @else {
+                    [{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}
+                    @if (respuesta.serialSistema) {
+                      <small>Serial del sistema: <code>{{ respuesta.serialSistema }}</code></small>
+                    }
                   }
                 </span>
 
@@ -254,6 +257,35 @@
                 </div>
               }
             </li>
+        </ng-template>
+
+        <ul class="inventario__precarga-lista">
+          @for (grupo of gruposPrecargados(); track grupo[0].id) {
+            @if (grupo.length > 1) {
+              <li class="inventario__precarga-grupo">
+                <div class="inventario__precarga-grupo-encabezado">
+                  <span class="inventario__precarga-grupo-titulo">
+                    [{{ grupo[0].material.codigo }}] {{ grupo[0].material.descripcion }}
+                  </span>
+                  <span class="inventario__precarga-grupo-contador">
+                    {{ validadosEnGrupo(grupo) }} de {{ grupo.length }} validados
+                  </span>
+                </div>
+                <ul class="inventario__precarga-sublista">
+                  @for (respuesta of grupo; track respuesta.id) {
+                    <ng-container
+                      [ngTemplateOutlet]="itemPrecarga"
+                      [ngTemplateOutletContext]="{ respuesta: respuesta, compacto: true }"
+                    ></ng-container>
+                  }
+                </ul>
+              </li>
+            } @else {
+              <ng-container
+                [ngTemplateOutlet]="itemPrecarga"
+                [ngTemplateOutletContext]="{ respuesta: grupo[0], compacto: false }"
+              ></ng-container>
+            }
           }
         </ul>
 

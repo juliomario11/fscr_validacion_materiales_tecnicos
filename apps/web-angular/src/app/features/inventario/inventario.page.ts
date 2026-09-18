@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -21,7 +21,7 @@ interface GrupoMateriales {
 
 @Component({
   selector: 'app-inventario-page',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, NgTemplateOutlet],
   templateUrl: './inventario.page.html',
   styleUrl: './inventario.page.scss',
 })
@@ -147,6 +147,32 @@ export class InventarioPage implements OnInit, OnDestroy {
   protected readonly misPrecargados = computed(() =>
     this.respuestasService.borrador().filter((respuesta) => respuesta.origen === 'precargado'),
   );
+
+  /**
+   * Agrupa los precargados por material -- cuando un técnico tiene varias
+   * unidades seriadas del MISMO ítem (ej. 3 "MODEM FO HGU MITR" con serial
+   * distinto), repetir la descripción completa 3 veces hace que las
+   * tarjetas se vean casi idénticas y sea fácil perderse. Con más de un
+   * ítem en el grupo, la plantilla muestra el nombre del material UNA
+   * sola vez y cada fila queda reducida a su serial + los mismos
+   * controles de siempre (nada cambia en cómo se guarda cada decisión --
+   * sigue siendo independiente por `id`).
+   */
+  protected readonly gruposPrecargados = computed(() => {
+    const grupos = new Map<number, RespuestaMaterial[]>();
+    for (const respuesta of this.misPrecargados()) {
+      const lista = grupos.get(respuesta.materialId) ?? [];
+      lista.push(respuesta);
+      grupos.set(respuesta.materialId, lista);
+    }
+    return Array.from(grupos.values());
+  });
+
+  /** "X de Y validados" a nivel de grupo -- mismo criterio que `progresoPrecarga`, pero solo sobre las filas de ese material. */
+  protected validadosEnGrupo(grupo: readonly RespuestaMaterial[]): number {
+    const decisiones = this.respuestasService.decisionesPrecarga();
+    return grupo.filter((respuesta) => decisiones.has(respuesta.id)).length;
+  }
 
   /** "X de Y validados" -- para la barra de progreso de la sección de precarga. */
   protected readonly progresoPrecarga = computed(() => {
