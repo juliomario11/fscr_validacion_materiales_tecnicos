@@ -1,3 +1,4 @@
+import { AdjuntoRespuesta } from './adjunto-respuesta';
 import { EstadoPrecarga, EstadoRespuesta, OrigenRespuesta } from './respuesta-material';
 
 export interface AdminEmpleadoResumen {
@@ -21,6 +22,8 @@ export interface AdminRespuesta {
   readonly cantidad: number;
   readonly observaciones: string | null;
   readonly serial: string | null;
+  /** Solo `origen='precargado'`: serial original del cron, congelado -- para comparar contra `serial` (el vigente/corregido). */
+  readonly serialSistema: string | null;
   readonly estado: EstadoRespuesta;
   readonly origen: OrigenRespuesta;
   readonly estadoPrecarga: EstadoPrecarga | null;
@@ -31,4 +34,6 @@ export interface AdminRespuesta {
   readonly fechaInicio: string;
   readonly fechaConfirmacion: string | null;
   readonly cantidadAdjuntos: number;
+  /** Detalle completo (no solo el conteo), para poder visualizarlos/descargarlos desde el panel. */
+  readonly adjuntos: ReadonlyArray<AdjuntoRespuesta>;
 }

@@ -219,3 +219,55 @@ body {
 .brand-logo--lg {
   height: 64px;
 }
+
+/* ---------- Modal de vista previa de adjuntos (/inventario y /admin/respuestas) ---------- */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.preview-modal {
+  width: min(100%, 720px);
+  max-height: 85vh;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.preview-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.preview-modal__body {
+  padding: 16px;
+  overflow: auto;
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+}
+
+.preview-modal__body img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.preview-modal__body iframe {
+  width: 100%;
+  height: 70vh;
+  border: none;
+}

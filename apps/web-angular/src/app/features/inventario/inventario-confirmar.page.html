@@ -30,23 +30,31 @@
       <tbody>
         @for (respuesta of respuestasService.borrador(); track respuesta.id) {
           <tr>
-            <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
-            <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
-            <td>{{ respuesta.serial || '—' }}</td>
-            <td>{{ respuesta.observaciones || '—' }}</td>
-            <td>
-              @if (respuesta.origen === 'precargado') {
-                @if (respuesta.estadoPrecarga === 'confirmado') {
+            @if (respuesta.origen === 'precargado' && decisionPrecarga(respuesta.id); as decision) {
+              <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+              <td>{{ decision.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+              <td>{{ (decision.serial || respuesta.serial) || '—' }}</td>
+              <td>{{ decision.observaciones || '—' }}</td>
+              <td>
+                @if (decision.estado === 'confirmado') {
                   Precargado · Confirmado
-                } @else if (respuesta.estadoPrecarga === 'ya_no_lo_tiene') {
-                  Precargado · Ya no lo tiene
                 } @else {
-                  Precargado · Sin validar
+                  Precargado · Ya no lo tiene
                 }
-              } @else {
-                Manual
-              }
-            </td>
+              </td>
+            } @else {
+              <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+              <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+              <td>{{ respuesta.serial || '—' }}</td>
+              <td>{{ respuesta.observaciones || '—' }}</td>
+              <td>
+                @if (respuesta.origen === 'precargado') {
+                  Precargado · Sin validar
+                } @else {
+                  Manual
+                }
+              </td>
+            }
             <td>{{ respuesta.adjuntos?.length ? respuesta.adjuntos!.length : 0 }}</td>
           </tr>
         }

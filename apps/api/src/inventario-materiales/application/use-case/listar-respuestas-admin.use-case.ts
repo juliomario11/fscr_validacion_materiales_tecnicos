@@ -45,6 +45,7 @@ export class ListarRespuestasAdminUseCase {
         cantidad: respuesta.cantidad,
         observaciones: respuesta.observaciones,
         serial: respuesta.serial,
+        serialSistema: respuesta.serialSistema,
         estado: respuesta.estado,
         origen: respuesta.origen,
         estadoPrecarga: respuesta.estadoPrecarga,
@@ -53,6 +54,11 @@ export class ListarRespuestasAdminUseCase {
         fechaInicio: respuesta.fechaInicio,
         fechaConfirmacion: respuesta.fechaConfirmacion,
         cantidadAdjuntos: respuesta.adjuntos.length,
+        adjuntos: respuesta.adjuntos.map((a) => ({
+          id: a.id,
+          nombreArchivo: a.nombreArchivo,
+          subidoEn: a.subidoEn,
+        })),
       };
     });
   }

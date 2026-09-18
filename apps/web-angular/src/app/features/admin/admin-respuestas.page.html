@@ -31,13 +31,18 @@
         <button class="btn btn--primary" type="button" (click)="exportar()">Exportar a Excel</button>
       </div>
 
+      @if (errorAdjunto()) {
+        <p class="alert alert--danger" role="alert">{{ errorAdjunto() }}</p>
+      }
+
       <table class="table">
         <thead>
           <tr>
             <th>Empleado</th>
             <th>Material</th>
             <th>Cantidad</th>
-            <th>Serial</th>
+            <th>Serial (sistema)</th>
+            <th>Serial (reportado)</th>
             <th>Observaciones</th>
             <th>Origen</th>
             <th>Estado</th>
@@ -52,7 +57,13 @@
               <td>{{ respuesta.empleado.nombreCompleto }} ({{ respuesta.empleado.cedula }})</td>
               <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
               <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
-              <td>{{ respuesta.serial || '—' }}</td>
+              <td>{{ respuesta.serialSistema || '—' }}</td>
+              <td>
+                {{ respuesta.serial || '—' }}
+                @if (respuesta.serialSistema && respuesta.serial && respuesta.serialSistema !== respuesta.serial) {
+                  <br /><span class="badge badge--advertencia">Corregido</span>
+                }
+              </td>
               <td>{{ respuesta.observaciones || '—' }}</td>
               <td>
                 @if (respuesta.origen === 'precargado') {
@@ -75,7 +86,40 @@
                   {{ respuesta.estado === 'confirmado' ? 'Confirmado' : 'Borrador' }}
                 </span>
               </td>
-              <td>{{ respuesta.cantidadAdjuntos }}</td>
+              <td>
+                @if (respuesta.adjuntos.length) {
+                  <ul class="admin__adjuntos-lista">
+                    @for (adjunto of respuesta.adjuntos; track adjunto.id) {
+                      <li class="admin__adjunto-item">
+                        <span class="admin__adjunto-nombre">
+                          {{ adjunto.nombreArchivo }}
+                          <small>{{ adjunto.subidoEn | date: 'short' }}</small>
+                        </span>
+                        <span class="admin__adjunto-acciones">
+                          <button
+                            class="btn btn--ghost"
+                            type="button"
+                            [disabled]="procesandoAdjuntoId() === adjunto.id"
+                            (click)="verAdjunto(adjunto)"
+                          >
+                            Ver
+                          </button>
+                          <button
+                            class="btn btn--ghost"
+                            type="button"
+                            [disabled]="procesandoAdjuntoId() === adjunto.id"
+                            (click)="descargarAdjunto(adjunto)"
+                          >
+                            Descargar
+                          </button>
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  Sin adjuntos
+                }
+              </td>
               <td>
                 {{ (respuesta.fechaConfirmacion || respuesta.fechaInicio) | date: 'short' }}
               </td>
@@ -89,11 +133,29 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="10">No hay respuestas registradas.</td>
+              <td colspan="11">No hay respuestas registradas.</td>
             </tr>
           }
         </tbody>
       </table>
     </section>
+  }
+
+  @if (previewUrl(); as url) {
+    <div class="preview-overlay" (click)="cerrarPreview()">
+      <div class="preview-modal" (click)="$event.stopPropagation()">
+        <header class="preview-modal__header">
+          <span>{{ previewNombre() }}</span>
+          <button class="btn btn--ghost" type="button" (click)="cerrarPreview()">Cerrar</button>
+        </header>
+        <div class="preview-modal__body">
+          @if (previewTipo() === 'imagen') {
+            <img [src]="url" [alt]="previewNombre() ?? 'Vista previa del adjunto'" />
+          } @else if (previewTipo() === 'pdf') {
+            <iframe [src]="previewSafeUrl()" title="Vista previa del PDF"></iframe>
+          }
+        </div>
+      </div>
+    </div>
   }
 </main>

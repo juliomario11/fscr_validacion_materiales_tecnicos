@@ -7,17 +7,21 @@ import {
   type RespuestasInventarioRepository,
 } from '../../domain/repository/respuestas-inventario.repository';
 import {
+  CantidadPrecargaInvalidaException,
   RespuestaConfirmadaException,
   RespuestaNoEncontradaException,
 } from '../exception/inventario-materiales.exceptions';
 
 /**
  * El técnico (o el supervisor, operando su misma sesión) valida un ítem
- * precargado puntual: "sí lo tengo" (`confirmado`) o "ya no lo tengo"
- * (`ya_no_lo_tiene`). Nunca se le pide una cantidad nueva -- la decisión es
- * binaria a propósito (ver conversación de producto: la cantidad que trajo
- * el cron no se le muestra, solo se le dice que el sistema cree que cuenta
- * con ese ítem).
+ * precargado puntual: "sí lo tengo" (`confirmado`, indicando cuántas
+ * unidades reales cuenta) o "ya no lo tengo" (`ya_no_lo_tiene`, cantidad
+ * forzada a 0). Nunca se le muestra la cantidad que trajo el cron -- eso
+ * queda en `cantidad_precargada`, solo visible en /admin.
+ *
+ * El frontend llama este endpoint una vez por ítem, en paralelo, justo
+ * antes de la confirmación global (`POST /mis-respuestas/confirmar`) --
+ * hasta ese momento las decisiones viven solo en memoria del navegador.
  */
 @Injectable()
 export class ConfirmarPrecargaUseCase {
@@ -30,6 +34,9 @@ export class ConfirmarPrecargaUseCase {
     empleadoId: number,
     respuestaId: number,
     estadoPrecarga: EstadoPrecarga,
+    cantidad: number | null,
+    serial?: string,
+    observaciones?: string,
   ): Promise<RespuestaConDetalle> {
     const existente = await this.respuestasRepository.findByIdConDetalle(respuestaId);
     if (!existente || existente.empleadoId !== empleadoId || existente.origen !== 'precargado') {
@@ -39,7 +46,24 @@ export class ConfirmarPrecargaUseCase {
       throw new RespuestaConfirmadaException();
     }
 
-    await this.respuestasRepository.actualizarEstadoPrecarga(respuestaId, estadoPrecarga);
+    if (estadoPrecarga === 'confirmado' && (cantidad === null || cantidad < 1)) {
+      throw new CantidadPrecargaInvalidaException();
+    }
+    const cantidadFinal = estadoPrecarga === 'confirmado' ? (cantidad as number) : 0;
+
+    // La corrección de serial/observaciones solo tiene sentido cuando el
+    // técnico dice que SÍ tiene el ítem -- si dice que ya no lo tiene, no
+    // se tocan (undefined = no incluir en el PATCH, deja lo que había).
+    const serialFinal = estadoPrecarga === 'confirmado' ? serial : undefined;
+    const observacionesFinal = estadoPrecarga === 'confirmado' ? observaciones : undefined;
+
+    await this.respuestasRepository.actualizarEstadoPrecarga(
+      respuestaId,
+      estadoPrecarga,
+      cantidadFinal,
+      serialFinal,
+      observacionesFinal,
+    );
 
     const actualizado = await this.respuestasRepository.findByIdConDetalle(respuestaId);
     if (!actualizado) {

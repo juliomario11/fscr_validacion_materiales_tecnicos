@@ -48,4 +48,14 @@ export class DescargarAdjuntoUseCase {
     const archivo = await this.storage.leer(adjunto.storagePath);
     return { ...archivo, nombreArchivo: adjunto.nombreArchivo };
   }
+
+  /** Para el panel admin: sin chequeo de dueño -- el admin puede ver los adjuntos de CUALQUIER empleado. */
+  public async executeAdmin(adjuntoId: number): Promise<DescargarAdjuntoResult> {
+    const adjunto = await this.adjuntosRepository.findById(adjuntoId);
+    if (!adjunto) {
+      throw new AdjuntoNoEncontradoException();
+    }
+    const archivo = await this.storage.leer(adjunto.storagePath);
+    return { ...archivo, nombreArchivo: adjunto.nombreArchivo };
+  }
 }

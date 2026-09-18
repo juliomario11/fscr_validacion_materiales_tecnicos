@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { forkJoin, map, Observable, of, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { AdjuntoRespuesta } from '../models/adjunto-respuesta';
@@ -10,6 +10,15 @@ import {
   GuardarRespuestaPayload,
   RespuestaMaterial,
 } from '../models/respuesta-material';
+
+/** Decisión sobre un ítem precargado, mientras vive SOLO en memoria del navegador (todavía no se escribió en la BD). */
+export interface DecisionPrecargaLocal {
+  readonly estado: EstadoPrecarga;
+  readonly cantidad: number;
+  /** Corrección opcional del serial que trajo el cron -- el original (`serialSistema`) nunca se toca. Solo aplica si `estado='confirmado'`. */
+  readonly serial?: string | null;
+  readonly observaciones?: string | null;
+}
 
 /**
  * Guarda `mis-respuestas` en un signal compartido para que la pantalla de
@@ -24,16 +33,30 @@ export class RespuestasService {
   private readonly misRespuestasState = signal<RespuestaMaterial[]>([]);
   public readonly misRespuestas = this.misRespuestasState.asReadonly();
 
+  /**
+   * Decisiones sobre ítems precargados ("sí lo tengo"/"ya no lo tengo" +
+   * cantidad), tomadas por el técnico pero NO escritas en la BD todavía --
+   * eso solo pasa al confirmar el envío completo (ver
+   * `enviarDecisionesPrecarga`). Vive en este servicio (no en el
+   * componente) para sobrevivir la navegación entre /inventario y
+   * /inventario/confirmar.
+   */
+  private readonly decisionesPrecargaState = signal<ReadonlyMap<number, DecisionPrecargaLocal>>(new Map());
+  public readonly decisionesPrecarga = this.decisionesPrecargaState.asReadonly();
+
   public readonly borrador = computed(() =>
     this.misRespuestasState().filter((respuesta) => respuesta.estado === 'borrador'),
   );
   public readonly confirmadas = computed(() =>
     this.misRespuestasState().filter((respuesta) => respuesta.estado === 'confirmado'),
   );
-  /** Ítems que vinieron del cron de las 5 AM y todavía no se validaron ("sí lo tengo" / "ya no lo tengo"). */
-  public readonly precargadosPendientes = computed(() =>
-    this.borrador().filter((respuesta) => respuesta.origen === 'precargado' && respuesta.estadoPrecarga === null),
-  );
+  /** `true` si algún ítem precargado en borrador todavía no tiene una decisión LOCAL tomada. */
+  public readonly faltanDecisionesPrecarga = computed(() => {
+    const decisiones = this.decisionesPrecargaState();
+    return this.borrador()
+      .filter((respuesta) => respuesta.origen === 'precargado')
+      .some((respuesta) => !decisiones.has(respuesta.id));
+  });
 
   public cargarMisRespuestas(): Observable<RespuestaMaterial[]> {
     return this.http
@@ -50,13 +73,45 @@ export class RespuestasService {
       .pipe(tap((respuesta) => this.upsertLocal(respuesta)));
   }
 
-  /** "Sí lo tengo" / "ya no lo tengo" sobre un ítem precargado puntual (identificado por su `id` de fila, no por `materialId`). */
-  public confirmarPrecarga(respuestaId: number, estado: EstadoPrecarga): Observable<RespuestaMaterial> {
-    return this.http
-      .patch<RespuestaMaterial>(`${environment.apiBaseUrl}/mis-respuestas/precargados/${respuestaId}`, {
-        estado,
-      })
-      .pipe(tap((respuesta) => this.upsertLocal(respuesta)));
+  public decisionPrecargaLocal(respuestaId: number): DecisionPrecargaLocal | null {
+    return this.decisionesPrecargaState().get(respuestaId) ?? null;
+  }
+
+  /** Solo guarda la decisión EN MEMORIA -- no llama al backend. Se puede llamar varias veces para cambiar de opinión antes de confirmar. */
+  public establecerDecisionPrecargaLocal(respuestaId: number, decision: DecisionPrecargaLocal): void {
+    this.decisionesPrecargaState.update((mapa) => {
+      const copia = new Map(mapa);
+      copia.set(respuestaId, decision);
+      return copia;
+    });
+  }
+
+  /**
+   * Envía TODAS las decisiones locales al backend (una llamada `PATCH` por
+   * ítem, en paralelo) -- se llama justo antes de la confirmación global
+   * (`confirmarEnvio`). Si no hay ninguna decisión pendiente, resuelve de
+   * inmediato sin llamar a la red.
+   */
+  public enviarDecisionesPrecarga(): Observable<RespuestaMaterial[]> {
+    const decisiones = Array.from(this.decisionesPrecargaState().entries());
+    if (decisiones.length === 0) return of([]);
+
+    const llamadas = decisiones.map(([respuestaId, decision]) =>
+      this.http
+        .patch<RespuestaMaterial>(`${environment.apiBaseUrl}/mis-respuestas/precargados/${respuestaId}`, {
+          estado: decision.estado,
+          cantidad: decision.estado === 'confirmado' ? decision.cantidad : undefined,
+          serial: decision.estado === 'confirmado' ? decision.serial || undefined : undefined,
+          observaciones: decision.estado === 'confirmado' ? decision.observaciones || undefined : undefined,
+        })
+        .pipe(tap((respuesta) => this.upsertLocal(respuesta))),
+    );
+    return forkJoin(llamadas).pipe(
+      map((respuestas) => {
+        this.decisionesPrecargaState.set(new Map());
+        return respuestas;
+      }),
+    );
   }
 
   public subirAdjunto(materialId: number, archivo: File): Observable<AdjuntoRespuesta> {
@@ -68,6 +123,18 @@ export class RespuestasService {
         formData,
       )
       .pipe(tap((adjunto) => this.agregarAdjuntoLocal(materialId, adjunto)));
+  }
+
+  /** Igual que `subirAdjunto`, pero para una fila `origen='precargado'` -- identificada por su propio id, no por `materialId`. */
+  public subirAdjuntoPrecarga(respuestaId: number, archivo: File): Observable<AdjuntoRespuesta> {
+    const formData = new FormData();
+    formData.append('archivo', archivo, archivo.name);
+    return this.http
+      .post<AdjuntoRespuesta>(
+        `${environment.apiBaseUrl}/mis-respuestas/precargados/${respuestaId}/adjuntos`,
+        formData,
+      )
+      .pipe(tap((adjunto) => this.agregarAdjuntoLocalPorRespuestaId(respuestaId, adjunto)));
   }
 
   /**
@@ -131,6 +198,16 @@ export class RespuestasService {
     this.misRespuestasState.update((lista) =>
       lista.map((respuesta) =>
         respuesta.materialId === materialId && respuesta.origen === 'manual'
+          ? { ...respuesta, adjuntos: [...(respuesta.adjuntos ?? []), adjunto] }
+          : respuesta,
+      ),
+    );
+  }
+
+  private agregarAdjuntoLocalPorRespuestaId(respuestaId: number, adjunto: AdjuntoRespuesta): void {
+    this.misRespuestasState.update((lista) =>
+      lista.map((respuesta) =>
+        respuesta.id === respuestaId
           ? { ...respuesta, adjuntos: [...(respuesta.adjuntos ?? []), adjunto] }
           : respuesta,
       ),

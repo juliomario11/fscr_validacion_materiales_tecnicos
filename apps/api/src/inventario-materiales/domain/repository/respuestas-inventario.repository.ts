@@ -67,6 +67,18 @@ export interface RespuestasInventarioRepository {
   insertPrecargados(payloads: ReadonlyArray<InsertPrecargadoPayload>): Promise<void>;
   /** Todas las filas `origen = 'precargado'` de este empleado (con o sin decisión ya tomada). */
   findPrecargadosByEmpleado(empleadoId: number): Promise<RespuestaInventario[]>;
-  /** Registra la decisión del técnico/supervisor sobre un ítem precargado puntual (por el id de esa fila). */
-  actualizarEstadoPrecarga(id: number, estadoPrecarga: EstadoPrecarga): Promise<RespuestaInventario>;
+  /**
+   * Registra la decisión del técnico/supervisor sobre un ítem precargado
+   * puntual (por el id de esa fila) junto con la cantidad real que contó
+   * (0 si `ya_no_lo_tiene`). `serial`/`observaciones` son opcionales --
+   * `undefined` deja el valor actual intacto, útil cuando el técnico no
+   * corrigió nada.
+   */
+  actualizarEstadoPrecarga(
+    id: number,
+    estadoPrecarga: EstadoPrecarga,
+    cantidad: number,
+    serial?: string | null,
+    observaciones?: string | null,
+  ): Promise<RespuestaInventario>;
 }

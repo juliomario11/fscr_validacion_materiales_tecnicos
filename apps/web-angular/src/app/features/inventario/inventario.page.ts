@@ -50,8 +50,19 @@ export class InventarioPage implements OnInit, OnDestroy {
   protected readonly errorAdjunto = signal<string | null>(null);
   protected readonly procesandoAdjuntoId = signal<number | null>(null);
 
-  protected readonly procesandoPrecargaId = signal<number | null>(null);
   protected readonly errorPrecarga = signal<string | null>(null);
+  protected readonly subiendoAdjuntoPrecargaId = signal<number | null>(null);
+
+  /**
+   * Valores que el técnico está tentativamente escribiendo por ítem
+   * precargado (cantidad, corrección de serial, observaciones) -- viven
+   * SOLO en este componente hasta que se pulsa "Sí, lo tengo"/"Ya no lo
+   * tengo" (ahí pasan a `RespuestasService.establecerDecisionPrecargaLocal`,
+   * y de ahí a la BD solo al confirmar el envío completo).
+   */
+  private readonly cantidadesPrecarga = signal<ReadonlyMap<number, number>>(new Map());
+  private readonly serialesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
+  private readonly observacionesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
 
   protected readonly previewNombre = signal<string | null>(null);
   protected readonly previewTipo = signal<TipoPreview | null>(null);
@@ -143,9 +154,7 @@ export class InventarioPage implements OnInit, OnDestroy {
    * llegar a esa pantalla para no hacer descubrir el error hasta el final.
    */
   protected readonly puedeContinuar = computed(
-    () =>
-      this.respuestasService.borrador().length > 0 &&
-      this.respuestasService.precargadosPendientes().length === 0,
+    () => this.respuestasService.borrador().length > 0 && !this.respuestasService.faltanDecisionesPrecarga(),
   );
 
   public ngOnInit(): void {
@@ -283,22 +292,80 @@ export class InventarioPage implements OnInit, OnDestroy {
       });
   }
 
+  protected cantidadPrecarga(respuestaId: number): number {
+    return this.cantidadesPrecarga().get(respuestaId) ?? 1;
+  }
+
+  protected establecerCantidadPrecarga(respuestaId: number, valor: number): void {
+    this.cantidadesPrecarga.update((mapa) => new Map(mapa).set(respuestaId, valor));
+  }
+
+  /** Por defecto, el serial vigente que ya trae la fila (igual al del sistema mientras no se corrija). */
+  protected serialPrecarga(respuesta: RespuestaMaterial): string {
+    return this.serialesPrecarga().get(respuesta.id) ?? respuesta.serial ?? '';
+  }
+
+  protected establecerSerialPrecarga(respuestaId: number, valor: string): void {
+    this.serialesPrecarga.update((mapa) => new Map(mapa).set(respuestaId, valor));
+  }
+
+  protected observacionesPrecargaValor(respuestaId: number): string {
+    return this.observacionesPrecarga().get(respuestaId) ?? '';
+  }
+
+  protected establecerObservacionesPrecarga(respuestaId: number, valor: string): void {
+    this.observacionesPrecarga.update((mapa) => new Map(mapa).set(respuestaId, valor));
+  }
+
+  protected decisionPrecarga(respuestaId: number) {
+    return this.respuestasService.decisionPrecargaLocal(respuestaId);
+  }
+
   /**
    * El técnico (o el supervisor, en la misma sesión) valida un ítem
-   * precargado puntual: "sí lo tengo" o "ya no lo tengo". Se puede cambiar
-   * de opinión mientras siga en borrador -- vuelve a llamar este mismo
-   * endpoint con el otro estado.
+   * precargado puntual: "sí lo tengo" (con la cantidad real, el serial
+   * corregido si aplica, y observaciones) o "ya no lo tengo". Esto SOLO
+   * queda en memoria (`RespuestasService.establecerDecisionPrecargaLocal`)
+   * -- nada se escribe en la BD hasta confirmar el envío completo. Se
+   * puede cambiar de opinión llamando de nuevo con el otro estado.
    */
-  protected confirmarPrecarga(respuesta: RespuestaMaterial, estado: EstadoPrecarga): void {
-    if (this.procesandoPrecargaId()) return;
+  protected decidirPrecarga(respuesta: RespuestaMaterial, estado: EstadoPrecarga): void {
     this.errorPrecarga.set(null);
-    this.procesandoPrecargaId.set(respuesta.id);
 
-    this.respuestasService.confirmarPrecarga(respuesta.id, estado).subscribe({
-      next: () => this.procesandoPrecargaId.set(null),
-      error: () => {
-        this.procesandoPrecargaId.set(null);
-        this.errorPrecarga.set('No fue posible registrar tu respuesta. Intenta nuevamente.');
+    if (estado === 'ya_no_lo_tiene') {
+      this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, { estado, cantidad: 0 });
+      return;
+    }
+
+    const cantidad = this.cantidadPrecarga(respuesta.id);
+    if (!cantidad || cantidad < 1) {
+      this.errorPrecarga.set('Ingresa una cantidad válida (mínimo 1) antes de confirmar.');
+      return;
+    }
+
+    this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, {
+      estado,
+      cantidad,
+      serial: this.serialPrecarga(respuesta).trim() || null,
+      observaciones: this.observacionesPrecargaValor(respuesta.id).trim() || null,
+    });
+  }
+
+  /** Sube evidencia para un ítem precargado -- a diferencia de la decisión (sí/no), el adjunto se sube de inmediato: la fila ya existe en la BD desde que se materializó al loguearse. */
+  protected onArchivoPrecargaSeleccionado(respuesta: RespuestaMaterial, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    input.value = '';
+    if (!archivo || this.subiendoAdjuntoPrecargaId()) return;
+
+    this.errorPrecarga.set(null);
+    this.subiendoAdjuntoPrecargaId.set(respuesta.id);
+
+    this.respuestasService.subirAdjuntoPrecarga(respuesta.id, archivo).subscribe({
+      next: () => this.subiendoAdjuntoPrecargaId.set(null),
+      error: (error: unknown) => {
+        this.subiendoAdjuntoPrecargaId.set(null);
+        this.errorPrecarga.set(this.extraerMensajeError(error));
       },
     });
   }

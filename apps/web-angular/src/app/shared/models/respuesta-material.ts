@@ -22,8 +22,10 @@ export interface RespuestaMaterial {
   readonly material: Material;
   readonly cantidad: number;
   readonly observaciones: string | null;
-  /** Número de serie del ítem, cuando aplica (ej. computadores) -- `null` si el material no lo requiere. */
+  /** Número de serie VIGENTE del ítem -- en precargados, empieza igual a `serialSistema` pero el técnico puede corregirlo al confirmar. */
   readonly serial: string | null;
+  /** Solo `origen='precargado'`: serial original del cron, congelado -- `null` en filas `manual`. */
+  readonly serialSistema: string | null;
   readonly estado: EstadoRespuesta;
   readonly origen: OrigenRespuesta;
   /** `null` mientras no se valide (solo aplica a `origen = 'precargado'`). Nunca viene la cantidad precargada -- eso no se le muestra al técnico. */

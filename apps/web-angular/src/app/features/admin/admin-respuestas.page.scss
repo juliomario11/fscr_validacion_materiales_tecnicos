@@ -99,3 +99,37 @@
   background: var(--danger-soft);
   color: var(--danger);
 }
+
+.admin__adjuntos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.admin__adjunto-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+.admin__adjunto-nombre {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.admin__adjunto-nombre small {
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.admin__adjunto-acciones {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}

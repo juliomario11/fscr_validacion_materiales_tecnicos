@@ -18,6 +18,7 @@ interface RespuestaRow {
   cantidad: number | string;
   observaciones: string | null;
   serial: string | null;
+  serial_sistema: string | null;
   estado: 'borrador' | 'confirmado';
   origen: 'manual' | 'precargado';
   estado_precarga: EstadoPrecarga | null;
@@ -42,7 +43,7 @@ interface RespuestaConDetalleRow extends RespuestaRow {
 }
 
 const RESPUESTA_COLUMNS =
-  'id,empleado_id,material_id,cantidad,observaciones,serial,estado,origen,estado_precarga,cantidad_precargada,fuera_de_fecha,fecha_inicio,fecha_confirmacion,created_at,updated_at';
+  'id,empleado_id,material_id,cantidad,observaciones,serial,serial_sistema,estado,origen,estado_precarga,cantidad_precargada,fuera_de_fecha,fecha_inicio,fecha_confirmacion,created_at,updated_at';
 
 const RESPUESTA_CON_DETALLE_SELECT =
   `${RESPUESTA_COLUMNS},materiales(${MATERIAL_SELECT_COLUMNS}),inventario_adjuntos(id,nombre_archivo,subido_en)`;
@@ -55,6 +56,7 @@ function toRespuesta(row: RespuestaRow): RespuestaInventario {
     cantidad: Number(row.cantidad),
     observaciones: row.observaciones,
     serial: row.serial,
+    serialSistema: row.serial_sistema,
     estado: row.estado,
     origen: row.origen,
     estadoPrecarga: row.estado_precarga,
@@ -241,6 +243,10 @@ export class RespuestasInventarioSupabaseRepository implements RespuestasInventa
       empleado_id: p.empleadoId,
       material_id: p.materialId,
       serial: p.serial,
+      // Congelado para siempre en el insert -- aunque el técnico corrija
+      // "serial" al confirmar, este campo sigue mostrando lo que trajo el
+      // cron originalmente.
+      serial_sistema: p.serial,
       // Un renglón por serial precargado = 1 unidad a validar. Si el
       // técnico dice "ya no lo tengo" pasa a 0 (ver actualizarEstadoPrecarga).
       cantidad: 1,
@@ -278,18 +284,30 @@ export class RespuestasInventarioSupabaseRepository implements RespuestasInventa
     return rows.map(toRespuesta);
   }
 
-  public async actualizarEstadoPrecarga(id: number, estadoPrecarga: EstadoPrecarga): Promise<RespuestaInventario> {
+  public async actualizarEstadoPrecarga(
+    id: number,
+    estadoPrecarga: EstadoPrecarga,
+    cantidad: number,
+    serial?: string | null,
+    observaciones?: string | null,
+  ): Promise<RespuestaInventario> {
     const qs = new URLSearchParams();
     qs.set('id', `eq.${id}`);
     qs.set('select', RESPUESTA_COLUMNS);
+    const body: Record<string, unknown> = {
+      estado_precarga: estadoPrecarga,
+      cantidad,
+    };
+    // `undefined` (no lo mandó el frontend) no se incluye -- deja el valor
+    // actual intacto. `null`/string sí se aplican explícitamente.
+    if (serial !== undefined) body.serial = serial;
+    if (observaciones !== undefined) body.observaciones = observaciones;
+
     const rows = await this.client.request<RespuestaRow[]>(`${this.table}?${qs.toString()}`, {
       method: 'PATCH',
       schema: SUPABASE_SCHEMA,
       prefer: 'return=representation',
-      body: {
-        estado_precarga: estadoPrecarga,
-        cantidad: estadoPrecarga === 'confirmado' ? 1 : 0,
-      },
+      body,
     });
     const updated = rows[0];
     if (!updated) {

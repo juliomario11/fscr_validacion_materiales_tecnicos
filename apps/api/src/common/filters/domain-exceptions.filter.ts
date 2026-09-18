@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import {
   AdjuntoInvalidoException,
   AdjuntoNoEncontradoException,
+  CantidadPrecargaInvalidaException,
   CredencialAdminInvalidaException,
   CredencialInvalidaException,
   LimiteAdjuntosExcedidoException,
@@ -95,7 +96,11 @@ export class DomainExceptionsFilter implements ExceptionFilter {
       return { statusCode: HttpStatus.BAD_REQUEST, message: exception.message, error: 'Bad Request' };
     }
 
-    if (exception instanceof AdjuntoInvalidoException || exception instanceof LimiteAdjuntosExcedidoException) {
+    if (
+      exception instanceof AdjuntoInvalidoException ||
+      exception instanceof LimiteAdjuntosExcedidoException ||
+      exception instanceof CantidadPrecargaInvalidaException
+    ) {
       return { statusCode: HttpStatus.BAD_REQUEST, message: exception.message, error: 'Bad Request' };
     }
 

@@ -62,6 +62,7 @@ function toRespuestaDto(respuesta: RespuestaConDetalle): RespuestaResponseDto {
     cantidad: respuesta.cantidad,
     observaciones: respuesta.observaciones,
     serial: respuesta.serial,
+    serialSistema: respuesta.serialSistema,
     estado: respuesta.estado,
     origen: respuesta.origen,
     estadoPrecarga: respuesta.estadoPrecarga,
@@ -109,8 +110,10 @@ export class RespuestasController {
 
   /**
    * El técnico (o el supervisor, operando la misma sesión) valida un ítem
-   * precargado puntual: "sí lo tengo" o "ya no lo tengo" -- nunca se le
-   * pide una cantidad nueva. Solo aplica a filas `origen='precargado'` en
+   * precargado puntual: "sí lo tengo" (con la cantidad real que contó) o
+   * "ya no lo tengo". El frontend llama esto una vez por ítem, justo antes
+   * de la confirmación global -- hasta ese momento las decisiones viven
+   * solo en el navegador. Solo aplica a filas `origen='precargado'` en
    * estado `'borrador'`; ver `ConfirmarPrecargaUseCase`.
    */
   @Patch('precargados/:respuestaId')
@@ -119,7 +122,14 @@ export class RespuestasController {
     @Param('respuestaId', ParseIntPipe) respuestaId: number,
     @Body() body: ConfirmarPrecargaRequestDto,
   ): Promise<RespuestaResponseDto> {
-    const respuesta = await this.confirmarPrecarga.execute(empleado.empleadoId, respuestaId, body.estado);
+    const respuesta = await this.confirmarPrecarga.execute(
+      empleado.empleadoId,
+      respuestaId,
+      body.estado,
+      body.cantidad ?? null,
+      body.serial,
+      body.observaciones,
+    );
     return toRespuestaDto(respuesta);
   }
 
@@ -163,6 +173,28 @@ export class RespuestasController {
       empleadoId: empleado.empleadoId,
       cedula: empleado.cedula,
       materialId,
+      buffer: file.buffer,
+      nombreOriginal: file.originalname,
+      mimeType: file.mimetype,
+    });
+    return { id: adjunto.id, nombreArchivo: adjunto.nombreArchivo, subidoEn: adjunto.subidoEn };
+  }
+
+  /** Mismo flujo que `subirAdjuntoEndpoint`, pero para una fila `origen='precargado'` -- identificada por su propio id, no por `materialId` (puede haber varias filas del mismo material). */
+  @Post('precargados/:respuestaId/adjuntos')
+  @UseInterceptors(FileInterceptor('archivo', { limits: { fileSize: MAX_ADJUNTO_BYTES, files: 1 } }))
+  public async subirAdjuntoPrecargaEndpoint(
+    @CurrentEmpleado() empleado: SessionEmpleado,
+    @Param('respuestaId', ParseIntPipe) respuestaId: number,
+    @UploadedFile() file?: MulterLikeFile,
+  ): Promise<AdjuntoResponseDto> {
+    if (!file) {
+      throw new BadRequestException('Debe adjuntar un archivo en el campo "archivo".');
+    }
+    const adjunto = await this.subirAdjunto.executeParaPrecarga({
+      empleadoId: empleado.empleadoId,
+      cedula: empleado.cedula,
+      respuestaId,
       buffer: file.buffer,
       nombreOriginal: file.originalname,
       mimeType: file.mimetype,

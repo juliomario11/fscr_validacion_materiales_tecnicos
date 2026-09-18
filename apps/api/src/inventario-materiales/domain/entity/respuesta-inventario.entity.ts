@@ -28,8 +28,10 @@ export interface RespuestaInventario {
   materialId: number;
   cantidad: number;
   observaciones: string | null;
-  /** Número de serie del ítem. En filas `manual` es opcional (lo tipea el técnico); en `precargado` viene del cron y actúa como parte de la identidad de la fila. */
+  /** Número de serie VIGENTE del ítem. En filas `manual` es opcional (lo tipea el técnico); en `precargado` empieza igual a `serialSistema` pero el técnico puede corregirlo al confirmar. */
   serial: string | null;
+  /** Solo `origen='precargado'`: el serial tal cual lo trajo el cron, congelado desde el insert -- nunca cambia, aunque `serial` sí se corrija. `null` en filas `manual`. */
+  serialSistema: string | null;
   estado: EstadoRespuestaInventario;
   origen: OrigenRespuesta;
   /** `null` mientras el técnico no haya validado este ítem precargado (solo aplica a `origen = 'precargado'`). */

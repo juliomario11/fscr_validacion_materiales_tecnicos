@@ -16,8 +16,8 @@ export class InventarioConfirmarPage implements OnInit {
   private readonly router = inject(Router);
 
   /** El backend rechaza la confirmación final si queda algún precargado sin validar -- se bloquea el botón antes de que eso ocurra. */
-  protected readonly faltanPrecargadosPorValidar = computed(
-    () => this.respuestasService.precargadosPendientes().length > 0,
+  protected readonly faltanPrecargadosPorValidar = computed(() =>
+    this.respuestasService.faltanDecisionesPrecarga(),
   );
 
   protected readonly cargando = signal(true);
@@ -57,19 +57,40 @@ export class InventarioConfirmarPage implements OnInit {
     void this.router.navigateByUrl('/inventario');
   }
 
+  /** Decisión local (todavía no persistida) sobre un ítem precargado -- para que esta tabla de revisión muestre lo que en verdad se va a enviar, no el `cantidad=1` que trae mientras esté sin validar en el servidor. */
+  protected decisionPrecarga(respuestaId: number) {
+    return this.respuestasService.decisionPrecargaLocal(respuestaId);
+  }
+
+  /**
+   * Primero escribe en la BD todas las decisiones de precarga que hasta
+   * ahora vivían solo en memoria (una llamada por ítem, en paralelo) y
+   * SOLO si eso funciona pasa a la confirmación global -- así nunca queda
+   * nada "confirmado" a medias en la BD si algo falla a mitad de camino.
+   */
   protected confirmarEnvio(): void {
     if (this.confirmando()) return;
     this.confirmando.set(true);
     this.errorConfirmar.set(null);
 
-    this.respuestasService.confirmarEnvio().subscribe({
+    this.respuestasService.enviarDecisionesPrecarga().subscribe({
       next: () => {
-        this.confirmando.set(false);
-        void this.router.navigateByUrl('/inventario/gracias');
+        this.respuestasService.confirmarEnvio().subscribe({
+          next: () => {
+            this.confirmando.set(false);
+            void this.router.navigateByUrl('/inventario/gracias');
+          },
+          error: () => {
+            this.confirmando.set(false);
+            this.errorConfirmar.set('No fue posible confirmar el envío. Intenta nuevamente.');
+          },
+        });
       },
       error: () => {
         this.confirmando.set(false);
-        this.errorConfirmar.set('No fue posible confirmar el envío. Intenta nuevamente.');
+        this.errorConfirmar.set(
+          'No fue posible guardar tus respuestas sobre los ítems precargados. Intenta nuevamente.',
+        );
       },
     });
   }

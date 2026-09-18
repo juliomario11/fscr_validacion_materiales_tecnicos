@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { AdjuntoInventario } from '../../domain/entity/adjunto-inventario.entity';
+import { EstadoRespuestaInventario } from '../../domain/entity/respuesta-inventario.entity';
 import {
   ADJUNTOS_INVENTARIO_REPOSITORY,
   type AdjuntosInventarioRepository,
@@ -31,6 +32,22 @@ export interface SubirAdjuntoInput {
   mimeType: string;
 }
 
+export interface SubirAdjuntoPrecargaInput {
+  empleadoId: number;
+  cedula: string;
+  respuestaId: number;
+  buffer: Buffer;
+  nombreOriginal: string;
+  mimeType: string;
+}
+
+interface ArchivoCrudo {
+  cedula: string;
+  buffer: Buffer;
+  nombreOriginal: string;
+  mimeType: string;
+}
+
 @Injectable()
 export class SubirAdjuntoUseCase {
   public constructor(
@@ -42,6 +59,7 @@ export class SubirAdjuntoUseCase {
     private readonly storage: AdjuntosStoragePort,
   ) {}
 
+  /** Flujo MANUAL: resuelve la fila `origen='manual'` de ese material. */
   public async execute(input: SubirAdjuntoInput): Promise<AdjuntoInventario> {
     const respuesta = await this.respuestasRepository.findByEmpleadoYMaterial(
       input.empleadoId,
@@ -52,25 +70,40 @@ export class SubirAdjuntoUseCase {
         'Primero debes registrar una cantidad para este material antes de adjuntar evidencia.',
       );
     }
-    if (respuesta.estado === 'confirmado') {
-      throw new RespuestaConfirmadaException(
-        'Esta respuesta ya fue confirmada y no admite nuevos adjuntos.',
-      );
+    return this.subirParaRespuesta(respuesta.id, respuesta.estado, input);
+  }
+
+  /** Flujo PRECARGA: la fila ya existe (se materializó al loguearse) -- se identifica directo por su id, validando dueño y origen. */
+  public async executeParaPrecarga(input: SubirAdjuntoPrecargaInput): Promise<AdjuntoInventario> {
+    const respuesta = await this.respuestasRepository.findByIdConDetalle(input.respuestaId);
+    if (!respuesta || respuesta.empleadoId !== input.empleadoId || respuesta.origen !== 'precargado') {
+      throw new RespuestaNoEncontradaException();
+    }
+    return this.subirParaRespuesta(respuesta.id, respuesta.estado, input);
+  }
+
+  private async subirParaRespuesta(
+    respuestaId: number,
+    estado: EstadoRespuestaInventario,
+    input: ArchivoCrudo,
+  ): Promise<AdjuntoInventario> {
+    if (estado === 'confirmado') {
+      throw new RespuestaConfirmadaException('Esta respuesta ya fue confirmada y no admite nuevos adjuntos.');
     }
 
-    const yaSubidos = await this.adjuntosRepository.countByRespuestaId(respuesta.id);
+    const yaSubidos = await this.adjuntosRepository.countByRespuestaId(respuestaId);
     if (yaSubidos >= MAX_ADJUNTOS_POR_RESPUESTA) {
       throw new LimiteAdjuntosExcedidoException();
     }
 
-    const subido = await this.storage.subir(input.cedula, respuesta.id, {
+    const subido = await this.storage.subir(input.cedula, respuestaId, {
       buffer: input.buffer,
       nombreOriginal: input.nombreOriginal,
       mimeType: input.mimeType,
     });
 
     return this.adjuntosRepository.create({
-      respuestaId: respuesta.id,
+      respuestaId,
       storagePath: subido.storagePath,
       nombreArchivo: input.nombreOriginal,
       tipoMime: input.mimeType || null,

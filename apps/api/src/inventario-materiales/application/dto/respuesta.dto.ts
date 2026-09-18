@@ -25,6 +25,8 @@ export class RespuestaResponseDto {
   public cantidad!: number;
   public observaciones!: string | null;
   public serial!: string | null;
+  /** Solo `origen='precargado'`: serial original del cron, congelado -- para que el técnico/admin vea qué corrigió. `null` en filas `manual`. */
+  public serialSistema!: string | null;
   public estado!: EstadoRespuestaInventario;
   /** `manual` (lo agregó el técnico/supervisor) o `precargado` (vino del cron de las 5 AM). */
   public origen!: OrigenRespuesta;

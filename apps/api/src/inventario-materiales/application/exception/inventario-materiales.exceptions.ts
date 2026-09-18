@@ -57,6 +57,16 @@ export class PrecargaSinValidarException extends Error {
   }
 }
 
+/** Se lanza al confirmar un ítem precargado ("sí lo tengo") sin indicar cuántas unidades cuenta. */
+export class CantidadPrecargaInvalidaException extends Error {
+  public constructor(
+    message = 'Debes indicar la cantidad que tienes (mínimo 1) para confirmar este ítem.',
+  ) {
+    super(message);
+    this.name = 'CantidadPrecargaInvalidaException';
+  }
+}
+
 /** Nombre de archivo inseguro, extensión no permitida, o contenido que no coincide con la extensión declarada (magic bytes vía `file-type`). */
 export class AdjuntoInvalidoException extends Error {
   public constructor(message = 'El archivo adjunto no es válido.') {

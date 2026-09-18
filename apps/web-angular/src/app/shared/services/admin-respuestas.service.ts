@@ -18,4 +18,11 @@ export class AdminRespuestasService {
       .get<AdminRespuesta[]>(`${environment.apiBaseUrl}/admin/respuestas`)
       .pipe(tap((respuestas) => this.respuestasState.set(respuestas)));
   }
+
+  /** Trae el binario de un adjunto (de CUALQUIER empleado) como blob, para vista previa o descarga -- mismo patrón que `RespuestasService.descargarAdjunto`, pero por el endpoint admin. */
+  public descargarAdjunto(adjuntoId: number): Observable<Blob> {
+    return this.http.get(`${environment.apiBaseUrl}/admin/adjuntos/${adjuntoId}/file`, {
+      responseType: 'blob',
+    });
+  }
 }

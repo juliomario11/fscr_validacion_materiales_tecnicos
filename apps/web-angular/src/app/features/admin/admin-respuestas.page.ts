@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 
+import { AdjuntoRespuesta } from '../../shared/models/adjunto-respuesta';
 import { AdminRespuesta } from '../../shared/models/admin-respuesta';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import { AdminRespuestasService } from '../../shared/services/admin-respuestas.service';
@@ -9,21 +11,37 @@ import { XlsxExportService } from '../../shared/services/xlsx-export.service';
 import { formatFechaCorta } from '../../shared/utils/formato-fecha';
 import { timestampArchivo } from '../../shared/utils/timestamp-archivo';
 
+type TipoPreview = 'imagen' | 'pdf';
+
 @Component({
   selector: 'app-admin-respuestas-page',
   imports: [DatePipe, RouterLink],
   templateUrl: './admin-respuestas.page.html',
   styleUrl: './admin-respuestas.page.scss',
 })
-export class AdminRespuestasPage implements OnInit {
+export class AdminRespuestasPage implements OnInit, OnDestroy {
   protected readonly adminAuth = inject(AdminAuthService);
   private readonly respuestasService = inject(AdminRespuestasService);
   private readonly xlsxExport = inject(XlsxExportService);
   private readonly router = inject(Router);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly respuestas = this.respuestasService.respuestas;
   protected readonly cargando = signal(true);
   protected readonly errorCarga = signal<string | null>(null);
+
+  protected readonly procesandoAdjuntoId = signal<number | null>(null);
+  protected readonly errorAdjunto = signal<string | null>(null);
+
+  protected readonly previewNombre = signal<string | null>(null);
+  protected readonly previewTipo = signal<TipoPreview | null>(null);
+  private previewObjectUrl: string | null = null;
+  protected readonly previewUrl = signal<string | null>(null);
+  protected readonly previewSafeUrl = computed<SafeResourceUrl | null>(() => {
+    const url = this.previewUrl();
+    if (!url || this.previewTipo() !== 'pdf') return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  });
 
   public ngOnInit(): void {
     this.cargando.set(true);
@@ -35,6 +53,82 @@ export class AdminRespuestasPage implements OnInit {
         this.errorCarga.set('No fue posible cargar las respuestas. Intenta nuevamente.');
       },
     });
+  }
+
+  public ngOnDestroy(): void {
+    this.liberarPreviewUrl();
+  }
+
+  /**
+   * Mismo patrón que `InventarioPage.verAdjunto` (y el módulo de
+   * facturación de fscr_proveedores_factura, del que se copió este
+   * patrón): descarga el binario como blob y lo muestra en un modal --
+   * imagen o iframe de PDF según la extensión. El admin puede ver el
+   * adjunto de CUALQUIER empleado.
+   */
+  protected verAdjunto(adjunto: AdjuntoRespuesta): void {
+    if (this.procesandoAdjuntoId()) return;
+    this.errorAdjunto.set(null);
+    this.procesandoAdjuntoId.set(adjunto.id);
+
+    this.respuestasService.descargarAdjunto(adjunto.id).subscribe({
+      next: (blob) => {
+        this.procesandoAdjuntoId.set(null);
+        this.liberarPreviewUrl();
+        const url = URL.createObjectURL(blob);
+        this.previewObjectUrl = url;
+        this.previewUrl.set(url);
+        this.previewNombre.set(adjunto.nombreArchivo);
+        this.previewTipo.set(this.esPdf(adjunto.nombreArchivo) ? 'pdf' : 'imagen');
+      },
+      error: () => {
+        this.procesandoAdjuntoId.set(null);
+        this.errorAdjunto.set('No fue posible cargar la vista previa del adjunto.');
+      },
+    });
+  }
+
+  protected cerrarPreview(): void {
+    this.liberarPreviewUrl();
+    this.previewUrl.set(null);
+    this.previewNombre.set(null);
+    this.previewTipo.set(null);
+  }
+
+  /** Mismo fetch por blob que `verAdjunto`, pero fuerza la descarga con un `<a download>` temporal. */
+  protected descargarAdjunto(adjunto: AdjuntoRespuesta): void {
+    if (this.procesandoAdjuntoId()) return;
+    this.errorAdjunto.set(null);
+    this.procesandoAdjuntoId.set(adjunto.id);
+
+    this.respuestasService.descargarAdjunto(adjunto.id).subscribe({
+      next: (blob) => {
+        this.procesandoAdjuntoId.set(null);
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = adjunto.nombreArchivo;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.procesandoAdjuntoId.set(null);
+        this.errorAdjunto.set('No fue posible descargar el adjunto.');
+      },
+    });
+  }
+
+  private liberarPreviewUrl(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+      this.previewObjectUrl = null;
+    }
+  }
+
+  private esPdf(nombreArchivo: string): boolean {
+    return nombreArchivo.toLowerCase().endsWith('.pdf');
   }
 
   protected exportar(): void {
@@ -49,7 +143,8 @@ export class AdminRespuestasPage implements OnInit {
         { header: 'Categoría', value: (fila) => fila.material.categoria },
         { header: 'Cantidad', value: (fila) => fila.cantidad },
         { header: 'Unidad', value: (fila) => fila.material.unidadMedida },
-        { header: 'Serial', value: (fila) => fila.serial },
+        { header: 'Serial (sistema)', value: (fila) => fila.serialSistema },
+        { header: 'Serial (reportado)', value: (fila) => fila.serial },
         { header: 'Observaciones', value: (fila) => fila.observaciones },
         { header: 'Origen', value: (fila) => (fila.origen === 'precargado' ? 'Precargado' : 'Manual') },
         {

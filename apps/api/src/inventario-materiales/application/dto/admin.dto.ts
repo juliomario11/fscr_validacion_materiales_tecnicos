@@ -42,6 +42,12 @@ export class EmpleadoAdminResumenDto {
   public nombreCompleto!: string;
 }
 
+export class AdjuntoAdminResponseDto {
+  public id!: number;
+  public nombreArchivo!: string;
+  public subidoEn!: string;
+}
+
 export class RespuestaAdminResponseDto {
   public id!: number;
   public empleado!: EmpleadoAdminResumenDto;
@@ -49,6 +55,8 @@ export class RespuestaAdminResponseDto {
   public cantidad!: number;
   public observaciones!: string | null;
   public serial!: string | null;
+  /** Solo `origen='precargado'`: serial original del cron, congelado -- para comparar contra `serial` (el vigente/corregido). */
+  public serialSistema!: string | null;
   public estado!: 'borrador' | 'confirmado';
   public origen!: 'manual' | 'precargado';
   /** `null` si aún no se valida, o si `origen='manual'` (no aplica). */
@@ -60,4 +68,6 @@ export class RespuestaAdminResponseDto {
   public fechaInicio!: string;
   public fechaConfirmacion!: string | null;
   public cantidadAdjuntos!: number;
+  /** Detalle completo (no solo el conteo) para poder visualizarlos/descargarlos desde el panel -- ver `GET /admin/adjuntos/:id/file`. */
+  public adjuntos!: AdjuntoAdminResponseDto[];
 }
