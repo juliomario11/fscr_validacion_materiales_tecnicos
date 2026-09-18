@@ -28,7 +28,7 @@
       <section class="card inventario__precarga">
         <h2>Materiales que el sistema tiene registrados para ti</h2>
         <p class="inventario__precarga-ayuda">
-          Confirma si todavía cuentas con cada ítem. No verás ninguna cantidad -- solo dinos si lo tienes o ya no.
+          Revisa cada ítem y confírmanos si todavía lo tienes o ya no.
         </p>
 
         <div class="inventario__precarga-progreso">
@@ -69,6 +69,10 @@
                     <span class="badge badge--advertencia">Ya no lo tienes</span>
                   } @else if (eligiendoNegativa(respuesta.id)) {
                     <span class="badge badge--advertencia">Falta explicar por qué</span>
+                  } @else if (
+                    precargaExpandida(respuesta.id) && coincideSerial(respuesta.id) === false && !decisionPrecarga(respuesta.id)
+                  ) {
+                    <span class="badge badge--advertencia">Falta el serial real</span>
                   }
                   <button
                     class="btn"
@@ -105,15 +109,54 @@
                       />
                     </label>
 
-                    <label class="field">
-                      <span>Corregir serial (opcional)</span>
-                      <input
-                        type="text"
-                        [ngModel]="serialPrecarga(respuesta)"
-                        (ngModelChange)="establecerSerialPrecarga(respuesta, $event)"
-                      />
-                    </label>
+                    @if (respuesta.serialSistema) {
+                      <label class="field">
+                        <span>Serial</span>
+                        <input type="text" class="inventario__input-solo-lectura" [value]="respuesta.serialSistema" readonly />
+                      </label>
+                    }
                   </div>
+
+                  @if (respuesta.serialSistema) {
+                    <div class="inventario__precarga-coincide">
+                      <span class="inventario__precarga-coincide-etiqueta">¿Coincide el serial?</span>
+                      <span class="inventario__precarga-coincide-botones">
+                        <button
+                          class="btn"
+                          type="button"
+                          [class.btn--primary]="coincideSerial(respuesta.id) === true"
+                          [class.btn--ghost]="coincideSerial(respuesta.id) !== true"
+                          (click)="establecerCoincideSerial(respuesta, true)"
+                        >
+                          <span aria-hidden="true">✓</span> Sí
+                        </button>
+                        <button
+                          class="btn"
+                          type="button"
+                          [class.btn--danger]="coincideSerial(respuesta.id) === false"
+                          [class.btn--ghost]="coincideSerial(respuesta.id) !== false"
+                          (click)="establecerCoincideSerial(respuesta, false)"
+                        >
+                          <span aria-hidden="true">✕</span> No
+                        </button>
+                      </span>
+                    </div>
+
+                    @if (coincideSerial(respuesta.id) === false) {
+                      <label class="field">
+                        <span>Serial real <span class="inventario__requerido">(obligatorio)</span></span>
+                        <input
+                          type="text"
+                          placeholder="Escribe el serial que tiene el equipo"
+                          [ngModel]="nuevoSerialPrecarga(respuesta.id)"
+                          (ngModelChange)="establecerNuevoSerialPrecarga(respuesta, $event)"
+                        />
+                      </label>
+                      @if (!decisionPrecarga(respuesta.id)) {
+                        <p class="inventario__precarga-hint">Ingresa el serial real para poder continuar.</p>
+                      }
+                    }
+                  }
 
                   <label class="field">
                     <span>Observaciones (opcional)</span>

@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 
@@ -15,7 +16,7 @@ type TipoPreview = 'imagen' | 'pdf';
 
 @Component({
   selector: 'app-admin-respuestas-page',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, FormsModule],
   templateUrl: './admin-respuestas.page.html',
   styleUrl: './admin-respuestas.page.scss',
 })
@@ -29,6 +30,39 @@ export class AdminRespuestasPage implements OnInit, OnDestroy {
   protected readonly respuestas = this.respuestasService.respuestas;
   protected readonly cargando = signal(true);
   protected readonly errorCarga = signal<string | null>(null);
+
+  protected readonly filtroTexto = signal('');
+
+  /** Filtro de texto libre (cédula, nombre o material) -- puramente client-side, no vuelve a pedir nada al backend. */
+  protected readonly respuestasFiltradas = computed(() => {
+    const texto = this.filtroTexto().trim().toLowerCase();
+    const todas = this.respuestas();
+    if (!texto) return todas;
+    return todas.filter(
+      (respuesta) =>
+        respuesta.empleado.cedula.toLowerCase().includes(texto) ||
+        respuesta.empleado.nombreCompleto.toLowerCase().includes(texto) ||
+        respuesta.material.codigo.toLowerCase().includes(texto) ||
+        respuesta.material.descripcion.toLowerCase().includes(texto),
+    );
+  });
+
+  /** Conteos para la barra de resumen -- sobre TODAS las respuestas, no sobre el filtro de texto (para que siempre reflejen el estado real). */
+  protected readonly resumen = computed(() => {
+    const todas = this.respuestas();
+    return {
+      total: todas.length,
+      confirmados: todas.filter((respuesta) => respuesta.estado === 'confirmado').length,
+      borrador: todas.filter((respuesta) => respuesta.estado === 'borrador').length,
+      precargaSinValidar: todas.filter(
+        (respuesta) => respuesta.origen === 'precargado' && respuesta.estadoPrecarga === null,
+      ).length,
+      serialConDiscrepancia: todas.filter(
+        (respuesta) => !!respuesta.serialSistema && !!respuesta.serial && respuesta.serialSistema !== respuesta.serial,
+      ).length,
+      fueraDeFecha: todas.filter((respuesta) => respuesta.fueraDeFecha).length,
+    };
+  });
 
   protected readonly procesandoAdjuntoId = signal<number | null>(null);
   protected readonly errorAdjunto = signal<string | null>(null);

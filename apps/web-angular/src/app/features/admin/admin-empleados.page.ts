@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { AdminEmpleado } from '../../shared/models/admin-empleado';
@@ -17,7 +18,7 @@ const ESTADO_LABEL: Record<AdminEmpleado['estado'], string> = {
 
 @Component({
   selector: 'app-admin-empleados-page',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, FormsModule],
   templateUrl: './admin-empleados.page.html',
   styleUrl: './admin-empleados.page.scss',
 })
@@ -30,6 +31,34 @@ export class AdminEmpleadosPage implements OnInit {
   protected readonly empleados = this.empleadosService.empleados;
   protected readonly cargando = signal(true);
   protected readonly errorCarga = signal<string | null>(null);
+
+  protected readonly filtroTexto = signal('');
+
+  /** Filtro de texto libre (cédula, nombre, cargo, departamento o proyecto) -- puramente client-side. */
+  protected readonly empleadosFiltrados = computed(() => {
+    const texto = this.filtroTexto().trim().toLowerCase();
+    const todos = this.empleados();
+    if (!texto) return todos;
+    return todos.filter(
+      (empleado) =>
+        empleado.cedula.toLowerCase().includes(texto) ||
+        empleado.nombreCompleto.toLowerCase().includes(texto) ||
+        (empleado.cargo ?? '').toLowerCase().includes(texto) ||
+        (empleado.departamento ?? '').toLowerCase().includes(texto) ||
+        (empleado.proyecto ?? '').toLowerCase().includes(texto),
+    );
+  });
+
+  /** Conteos para la barra de resumen -- sobre TODOS los empleados, no sobre el filtro de texto. */
+  protected readonly resumen = computed(() => {
+    const todos = this.empleados();
+    return {
+      total: todos.length,
+      sinIniciar: todos.filter((empleado) => empleado.estado === 'sin_iniciar').length,
+      enProgreso: todos.filter((empleado) => empleado.estado === 'en_progreso').length,
+      confirmados: todos.filter((empleado) => empleado.estado === 'confirmado').length,
+    };
+  });
 
   public ngOnInit(): void {
     this.cargando.set(true);

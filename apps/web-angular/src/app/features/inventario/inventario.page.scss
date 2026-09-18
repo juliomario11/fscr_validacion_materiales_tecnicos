@@ -140,7 +140,8 @@
   flex-wrap: wrap;
 }
 
-.inventario__precarga-botones .btn {
+.inventario__precarga-botones .btn,
+.inventario__precarga-coincide-botones .btn {
   height: 30px;
   padding: 0 12px;
   font-size: 12.5px;
@@ -186,6 +187,29 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.inventario__input-solo-lectura {
+  background: #f3f6fb;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.inventario__precarga-coincide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inventario__precarga-coincide-etiqueta {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.inventario__precarga-coincide-botones {
+  display: flex;
+  gap: 6px;
 }
 
 @media (max-width: 560px) {

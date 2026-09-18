@@ -25,34 +25,71 @@
   @if (cargando()) {
     <p>Cargando respuestas...</p>
   } @else {
+    <div class="admin__resumen">
+      <div class="admin__resumen-chip">
+        <span class="admin__resumen-numero">{{ resumen().total }}</span>
+        <span class="admin__resumen-etiqueta">Total</span>
+      </div>
+      <div class="admin__resumen-chip admin__resumen-chip--exito">
+        <span class="admin__resumen-numero">{{ resumen().confirmados }}</span>
+        <span class="admin__resumen-etiqueta">Confirmados</span>
+      </div>
+      <div class="admin__resumen-chip admin__resumen-chip--advertencia">
+        <span class="admin__resumen-numero">{{ resumen().borrador }}</span>
+        <span class="admin__resumen-etiqueta">En borrador</span>
+      </div>
+      <div class="admin__resumen-chip admin__resumen-chip--advertencia">
+        <span class="admin__resumen-numero">{{ resumen().precargaSinValidar }}</span>
+        <span class="admin__resumen-etiqueta">Precarga sin validar</span>
+      </div>
+      <div class="admin__resumen-chip admin__resumen-chip--peligro">
+        <span class="admin__resumen-numero">{{ resumen().serialConDiscrepancia }}</span>
+        <span class="admin__resumen-etiqueta">Serial con discrepancia</span>
+      </div>
+      <div class="admin__resumen-chip admin__resumen-chip--peligro">
+        <span class="admin__resumen-numero">{{ resumen().fueraDeFecha }}</span>
+        <span class="admin__resumen-etiqueta">Fuera de fecha</span>
+      </div>
+    </div>
+
     <section class="card admin__tabla">
       <div class="admin__tabla-acciones">
-        <h2>Respuestas ({{ respuestas().length }})</h2>
-        <button class="btn btn--primary" type="button" (click)="exportar()">Exportar a Excel</button>
+        <h2>Respuestas ({{ respuestasFiltradas().length }} de {{ respuestas().length }})</h2>
+        <div class="admin__tabla-acciones-derecha">
+          <input
+            type="search"
+            class="admin__buscador"
+            placeholder="Buscar por cédula, nombre o material..."
+            [ngModel]="filtroTexto()"
+            (ngModelChange)="filtroTexto.set($event)"
+          />
+          <button class="btn btn--primary" type="button" (click)="exportar()">Exportar a Excel</button>
+        </div>
       </div>
 
       @if (errorAdjunto()) {
         <p class="alert alert--danger" role="alert">{{ errorAdjunto() }}</p>
       }
 
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Empleado</th>
-            <th>Material</th>
-            <th>Cantidad</th>
-            <th>Serial (sistema)</th>
-            <th>Serial (reportado)</th>
-            <th>Observaciones</th>
-            <th>Origen</th>
-            <th>Estado</th>
-            <th>Adjuntos</th>
-            <th>Fecha</th>
-            <th>Fuera de fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (respuesta of respuestas(); track respuesta.id) {
+      <div class="admin__tabla-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Empleado</th>
+              <th>Material</th>
+              <th>Cantidad</th>
+              <th>Serial (sistema)</th>
+              <th>Serial (reportado)</th>
+              <th>Observaciones</th>
+              <th>Origen</th>
+              <th>Estado</th>
+              <th>Adjuntos</th>
+              <th>Fecha</th>
+              <th>Fuera de fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+          @for (respuesta of respuestasFiltradas(); track respuesta.id) {
             <tr>
               <td>{{ respuesta.empleado.nombreCompleto }} ({{ respuesta.empleado.cedula }})</td>
               <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
@@ -133,11 +170,14 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="11">No hay respuestas registradas.</td>
+              <td colspan="11">
+                {{ filtroTexto().trim() ? 'Ninguna respuesta coincide con la búsqueda.' : 'No hay respuestas registradas.' }}
+              </td>
             </tr>
           }
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
     </section>
   }
 

@@ -61,7 +61,6 @@ export class InventarioPage implements OnInit, OnDestroy {
    * y de ahí a la BD solo al confirmar el envío completo).
    */
   private readonly cantidadesPrecarga = signal<ReadonlyMap<number, number>>(new Map());
-  private readonly serialesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
   private readonly observacionesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
   /** Ids de ítems precargados donde el técnico marcó el check "¿Deseas adjuntar un archivo?" -- solo ahí se muestra el `<input type="file">`. */
   private readonly quiereAdjuntarPrecargaState = signal<ReadonlySet<number>>(new Set());
@@ -71,6 +70,18 @@ export class InventarioPage implements OnInit, OnDestroy {
    * una decisión LOCAL válida (esa solo se crea una vez que escribe algo).
    */
   private readonly eligiendoNegativaState = signal<ReadonlySet<number>>(new Set());
+  /**
+   * Ids de ítems precargados donde el técnico pulsó "Sí, lo tengo" -- a
+   * diferencia de `decisionPrecarga`, esto NUNCA se borra mientras haya un
+   * campo inválido (cantidad o serial real faltante): así el bloque de
+   * detalle se mantiene desplegado para que pueda corregirlo, en vez de
+   * colapsarse de golpe.
+   */
+  private readonly quiereConfirmarState = signal<ReadonlySet<number>>(new Set());
+  /** `true`/`false` según el técnico responda si el serial del sistema coincide con el que tiene en mano -- `null` mientras no responda (se asume que coincide, sin bloquear nada). */
+  private readonly coincideSerialState = signal<ReadonlyMap<number, boolean>>(new Map());
+  /** Serial real, SOLO cuando `coincideSerialState` es `false` -- arranca vacío a propósito, nunca precargado con el valor viejo. */
+  private readonly nuevosSerialesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
 
   protected readonly previewNombre = signal<string | null>(null);
   protected readonly previewTipo = signal<TipoPreview | null>(null);
@@ -325,13 +336,23 @@ export class InventarioPage implements OnInit, OnDestroy {
     this.reafirmarDecisionSiConfirmado(respuesta);
   }
 
-  /** Por defecto, el serial vigente que ya trae la fila (igual al del sistema mientras no se corrija). */
-  protected serialPrecarga(respuesta: RespuestaMaterial): string {
-    return this.serialesPrecarga().get(respuesta.id) ?? respuesta.serial ?? '';
+  /** `true`/`false` si ya respondió, `null` si todavía no -- silencio se trata como "coincide" (no se corrige nada). */
+  protected coincideSerial(respuestaId: number): boolean | null {
+    return this.coincideSerialState().get(respuestaId) ?? null;
   }
 
-  protected establecerSerialPrecarga(respuesta: RespuestaMaterial, valor: string): void {
-    this.serialesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, valor));
+  protected establecerCoincideSerial(respuesta: RespuestaMaterial, coincide: boolean): void {
+    this.coincideSerialState.update((mapa) => new Map(mapa).set(respuesta.id, coincide));
+    this.reafirmarDecisionSiConfirmado(respuesta);
+  }
+
+  /** Vacío mientras no escriba nada -- nunca se precarga con el serial viejo, justo para forzar a que teclee el real. */
+  protected nuevoSerialPrecarga(respuestaId: number): string {
+    return this.nuevosSerialesPrecarga().get(respuestaId) ?? '';
+  }
+
+  protected establecerNuevoSerialPrecarga(respuesta: RespuestaMaterial, valor: string): void {
+    this.nuevosSerialesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, valor));
     this.reafirmarDecisionSiConfirmado(respuesta);
   }
 
@@ -354,7 +375,7 @@ export class InventarioPage implements OnInit, OnDestroy {
 
   /** La sección de detalle (cantidad/serial/observaciones/adjuntar) solo se despliega una vez que el técnico dijo "sí, lo tengo" -- antes de eso solo se ven los dos botones. */
   protected precargaExpandida(respuestaId: number): boolean {
-    return this.decisionPrecarga(respuestaId)?.estado === 'confirmado';
+    return this.quiereConfirmarState().has(respuestaId);
   }
 
   /** El bloque de "por qué ya no lo tienes" se despliega apenas se pulsa el botón, aunque todavía no haya una decisión LOCAL válida (esa recién se crea cuando escribe la observación). */
@@ -392,6 +413,12 @@ export class InventarioPage implements OnInit, OnDestroy {
 
     if (estado === 'ya_no_lo_tiene') {
       this.alternarAdjuntarPrecarga(respuesta.id, false);
+      this.quiereConfirmarState.update((set) => {
+        if (!set.has(respuesta.id)) return set;
+        const copia = new Set(set);
+        copia.delete(respuesta.id);
+        return copia;
+      });
       this.eligiendoNegativaState.update((set) => new Set(set).add(respuesta.id));
       this.actualizarDecisionNegativa(respuesta);
       return;
@@ -403,15 +430,24 @@ export class InventarioPage implements OnInit, OnDestroy {
       copia.delete(respuesta.id);
       return copia;
     });
+    this.quiereConfirmarState.update((set) => new Set(set).add(respuesta.id));
     if (!this.cantidadesPrecarga().has(respuesta.id)) {
       this.cantidadesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, 1));
     }
     this.guardarDecisionConfirmado(respuesta);
   }
 
-  /** Si el ítem ya está "confirmado", cada cambio en cantidad/serial/observaciones re-guarda la decisión local al vuelo -- así no hace falta un botón "Guardar" aparte para esos campos. */
+  /**
+   * Mientras el técnico siga en modo "sí, lo tengo" (`quiereConfirmarState`,
+   * que NO se borra ante un campo inválido), cada cambio en
+   * cantidad/coincide-serial/serial-real/observaciones reintenta guardar la
+   * decisión local al vuelo -- así no hace falta un botón "Guardar" aparte
+   * para esos campos, y una corrección posterior a un campo inválido sí
+   * vuelve a intentarlo (a diferencia de mirar `decisionPrecarga`, que puede
+   * haberse borrado por inválida).
+   */
   private reafirmarDecisionSiConfirmado(respuesta: RespuestaMaterial): void {
-    if (this.decisionPrecarga(respuesta.id)?.estado !== 'confirmado') return;
+    if (!this.quiereConfirmarState().has(respuesta.id)) return;
     this.guardarDecisionConfirmado(respuesta);
   }
 
@@ -419,12 +455,30 @@ export class InventarioPage implements OnInit, OnDestroy {
     const cantidad = this.cantidadPrecarga(respuesta.id);
     if (!cantidad || cantidad < 1) {
       this.errorPrecarga.set('Ingresa una cantidad válida (mínimo 1).');
+      this.respuestasService.eliminarDecisionPrecargaLocal(respuesta.id);
       return;
     }
+
+    // El serial del sistema (`serialSistema`) es de solo lectura -- solo se
+    // pide (y exige) un serial nuevo cuando el técnico marca explícitamente
+    // que NO coincide con el que tiene en mano. Si coincide (o no ha
+    // respondido todavía), no se manda `serial` -- el backend deja el valor
+    // actual intacto, que ya es igual a `serialSistema`.
+    let serialFinal: string | null = null;
+    if (respuesta.serialSistema && this.coincideSerial(respuesta.id) === false) {
+      const nuevoSerial = this.nuevoSerialPrecarga(respuesta.id).trim();
+      if (!nuevoSerial) {
+        this.errorPrecarga.set('Ingresa el serial real que tiene el equipo.');
+        this.respuestasService.eliminarDecisionPrecargaLocal(respuesta.id);
+        return;
+      }
+      serialFinal = nuevoSerial;
+    }
+
     this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, {
       estado: 'confirmado',
       cantidad,
-      serial: this.serialPrecarga(respuesta).trim() || null,
+      serial: serialFinal,
       observaciones: this.observacionesPrecargaValor(respuesta.id).trim() || null,
     });
   }
