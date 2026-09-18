@@ -21,6 +21,16 @@ interface EmpleadoInventarioRow {
   email: string | null;
 }
 
+/** Algunas filas de RRHH (Personal_Completo.xlsx) traen el texto literal "NULL" en vez de una celda vacía -- a veces repetido, ej. "NULL NULL". Se trata igual que un dato faltante. */
+const TEXTO_NULO_LITERAL = /^(null\s*)+$/i;
+
+function limpiarTextoNulo(valor: string | null): string | null {
+  if (valor === null) return null;
+  const recortado = valor.trim();
+  if (recortado === '' || TEXTO_NULO_LITERAL.test(recortado)) return null;
+  return recortado;
+}
+
 function toEmpleado(row: EmpleadoInventarioRow): EmpleadoInventario {
   return {
     id: row.id,
@@ -28,14 +38,14 @@ function toEmpleado(row: EmpleadoInventarioRow): EmpleadoInventario {
     nombreCompleto: row.nombre_completo,
     activo: row.activo,
     createdAt: row.created_at,
-    nombres: row.nombres,
-    apellidos: row.apellidos,
-    cargo: row.cargo,
-    departamento: row.departamento,
-    area: row.area,
-    proyecto: row.proyecto,
-    celular: row.celular,
-    email: row.email,
+    nombres: limpiarTextoNulo(row.nombres),
+    apellidos: limpiarTextoNulo(row.apellidos),
+    cargo: limpiarTextoNulo(row.cargo),
+    departamento: limpiarTextoNulo(row.departamento),
+    area: limpiarTextoNulo(row.area),
+    proyecto: limpiarTextoNulo(row.proyecto),
+    celular: limpiarTextoNulo(row.celular),
+    email: limpiarTextoNulo(row.email),
   };
 }
 

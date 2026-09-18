@@ -88,6 +88,14 @@
   flex-wrap: wrap;
 }
 
+.inventario__agregar-mas {
+  margin: 4px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
 .badge--exito {
   background: #e3f9e5;
   color: var(--success);
