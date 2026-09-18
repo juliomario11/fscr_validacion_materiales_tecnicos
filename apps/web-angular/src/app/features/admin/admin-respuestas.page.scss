@@ -61,7 +61,15 @@
   gap: 14px;
 }
 
-.admin__tabla h2 {
+.admin__tabla-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin__tabla-acciones h2 {
   margin: 0;
   font-size: 1rem;
 }
