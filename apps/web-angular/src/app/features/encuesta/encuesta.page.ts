@@ -164,16 +164,43 @@ export class EncuestaPage implements OnInit, OnDestroy {
     this.errorAdjunto.set(null);
   }
 
+  /**
+   * Sube el archivo apenas se elige en el `<input type="file">`, sin exigir
+   * un click adicional -- antes se guardaba en `archivo` y solo se subía si
+   * el usuario pulsaba "Adjuntar otra evidencia", lo que hacía creer que el
+   * archivo ya estaba cargado cuando en realidad no se había enviado.
+   */
   protected onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.archivo.set(input.files?.[0] ?? null);
+    const archivo = input.files?.[0] ?? null;
+    input.value = '';
+    if (!archivo) return;
+
+    const respuesta = this.respuestaSeleccionada();
+    if (!respuesta || this.subiendoAdjunto()) return;
+
+    this.subiendoAdjunto.set(true);
+    this.errorAdjunto.set(null);
+    this.archivo.set(archivo);
+
+    this.respuestasService.subirAdjunto(respuesta.materialId, archivo).subscribe({
+      next: () => {
+        this.subiendoAdjunto.set(false);
+        this.archivo.set(null);
+      },
+      error: (error: unknown) => {
+        this.subiendoAdjunto.set(false);
+        this.archivo.set(null);
+        this.errorAdjunto.set(this.extraerMensajeError(error));
+      },
+    });
   }
 
   /**
    * Guarda solo cantidad/observaciones (upsert). La subida de adjuntos es una
-   * acción independiente (ver `subirAdjuntoActual`) que se habilita apenas la
-   * respuesta existe, así el material seleccionado se mantiene visible con su
-   * lista de adjuntos y la opción de "Adjuntar otra evidencia" siempre
+   * acción independiente (ver `onArchivoSeleccionado`) que se habilita apenas
+   * la respuesta existe, así el material seleccionado se mantiene visible con
+   * su lista de adjuntos y el campo para adjuntar evidencia siempre
    * disponible -- no se oculta tras la primera subida.
    */
   protected agregarAMiLista(): void {
@@ -198,34 +225,6 @@ export class EncuestaPage implements OnInit, OnDestroy {
           this.errorGuardado.set('No fue posible guardar el material. Intenta nuevamente.');
         },
       });
-  }
-
-  /**
-   * Sube el archivo elegido para el material ya guardado en "mi lista". Tras
-   * un éxito limpia el `<input type="file">` (vía la referencia de plantilla)
-   * y el signal `archivo`, pero deja todo lo demás igual para poder repetir
-   * la acción tantas veces como el backend lo permita (máximo 5 -- si se
-   * excede, el backend responde 400 y ese mensaje se muestra tal cual).
-   */
-  protected subirAdjuntoActual(inputArchivo: HTMLInputElement): void {
-    const respuesta = this.respuestaSeleccionada();
-    const archivo = this.archivo();
-    if (!respuesta || !archivo || this.subiendoAdjunto()) return;
-
-    this.subiendoAdjunto.set(true);
-    this.errorAdjunto.set(null);
-
-    this.respuestasService.subirAdjunto(respuesta.materialId, archivo).subscribe({
-      next: () => {
-        this.subiendoAdjunto.set(false);
-        this.archivo.set(null);
-        inputArchivo.value = '';
-      },
-      error: (error: unknown) => {
-        this.subiendoAdjunto.set(false);
-        this.errorAdjunto.set(this.extraerMensajeError(error));
-      },
-    });
   }
 
   /**

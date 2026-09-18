@@ -154,24 +154,20 @@
 
               <label class="field">
                 <span>Adjuntar evidencia (opcional -- foto o PDF)</span>
-                <input #archivoInput type="file" accept="image/*,.pdf" (change)="onArchivoSeleccionado($event)" />
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  [disabled]="subiendoAdjunto()"
+                  (change)="onArchivoSeleccionado($event)"
+                />
               </label>
-              @if (archivo(); as archivoSeleccionado) {
-                <p class="encuesta__archivo">Archivo seleccionado: {{ archivoSeleccionado.name }}</p>
+              @if (subiendoAdjunto()) {
+                <p class="encuesta__archivo">Subiendo {{ archivo()?.name }}...</p>
               }
 
               @if (errorAdjunto()) {
                 <p class="alert alert--danger" role="alert">{{ errorAdjunto() }}</p>
               }
-
-              <button
-                class="btn btn--ghost"
-                type="button"
-                [disabled]="!archivo() || subiendoAdjunto()"
-                (click)="subirAdjuntoActual(archivoInput)"
-              >
-                {{ subiendoAdjunto() ? 'Subiendo...' : 'Adjuntar otra evidencia' }}
-              </button>
             </div>
           } @else {
             <p class="encuesta__sin-adjuntos">
