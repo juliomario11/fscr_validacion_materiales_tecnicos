@@ -8,14 +8,15 @@ import {
   CredencialInvalidaException,
   LimiteAdjuntosExcedidoException,
   MaterialNoEncontradoException,
+  PrecargaSinValidarException,
   RespuestaConfirmadaException,
   RespuestaNoEncontradaException,
   SinRespuestasParaConfirmarException,
-} from '../../encuesta-materiales/application/exception/encuesta-materiales.exceptions';
+} from '../../inventario-materiales/application/exception/inventario-materiales.exceptions';
 import {
   SupabaseConfigError,
   SupabaseRequestError,
-} from '../../encuesta-materiales/infrastructure/supabase/supabase.errors';
+} from '../../inventario-materiales/infrastructure/supabase/supabase.errors';
 
 export interface UniformErrorBody {
   statusCode: number;
@@ -35,7 +36,7 @@ interface NormalizedError {
  * Filtro global (`APP_FILTER` en `AppModule`) — único punto que traduce
  * excepciones de dominio/infraestructura a códigos HTTP. Los use-cases y
  * repositorios lanzan las excepciones de
- * `encuesta-materiales/application/exception` (nunca `HttpException` de
+ * `inventario-materiales/application/exception` (nunca `HttpException` de
  * Nest directamente) para no acoplar la capa de aplicación a HTTP.
  */
 @Catch()
@@ -87,7 +88,10 @@ export class DomainExceptionsFilter implements ExceptionFilter {
       return { statusCode: HttpStatus.CONFLICT, message: exception.message, error: 'Conflict' };
     }
 
-    if (exception instanceof SinRespuestasParaConfirmarException) {
+    if (
+      exception instanceof SinRespuestasParaConfirmarException ||
+      exception instanceof PrecargaSinValidarException
+    ) {
       return { statusCode: HttpStatus.BAD_REQUEST, message: exception.message, error: 'Bad Request' };
     }
 

@@ -17,9 +17,9 @@ apps/
         filters/domain-exceptions.filter.ts Mapea excepciones de dominio -> HTTP
         services/session-token.service.ts   Firma/verifica el JWT de sesión (jose)
         utils/cookie.util.ts               Lee la cookie de sesión (sin cookie-parser)
-      encuesta-materiales/
+      inventario-materiales/
         domain/
-          entity/            Material, EmpleadoEncuesta, RespuestaEncuesta, AdjuntoEncuesta
+          entity/            Material, EmpleadoInventario, RespuestaInventario, AdjuntoInventario
           repository/        Interfaces (sin implementación)
         application/
           dto/               Request/Response contracts (class-validator)
@@ -37,7 +37,7 @@ apps/
     src/app/
       features/
         auth/                 Login por cédula
-        encuesta/              Selección de materiales, "mi lista", resumen
+        inventario/              Selección de materiales, "mi lista", resumen
                                de confirmación, pantalla de agradecimiento
       shared/
         services/              AuthService, MaterialesService, RespuestasService
@@ -55,9 +55,9 @@ Este proyecto es dueño exclusivo del schema `validacion_materiales_tecnicos`:
 | Tabla | Filas iniciales | Notas |
 |-------|------------------|-------|
 | `materiales` | 358 | Catálogo cerrado; `categoria` es una de 11 valores fijos asignados por agentes IA a partir de la descripción |
-| `empleados_encuesta` | 113 | Whitelist; cédula+nombre tomados directo del negocio, no de `bdgeproc` (cobertura no confiable — ver `equipos_fscr.bodegas.responsable_usuario_legado`) |
-| `encuesta_respuestas` | 0 | Una fila por (empleado, material); `UNIQUE(empleado_id, material_id)`; `estado` borrador/confirmado; `serial` (texto, nullable) para el número de serie cuando aplica -- ej. computadores -- no es obligatorio para el resto de materiales |
-| `encuesta_adjuntos` | 0 | Solo metadata (`storage_path` relativo); el binario vive en disco del servidor, `DOCUMENTS_STORAGE_PATH` |
+| `empleados_inventario` | 113 | Whitelist; cédula+nombre tomados directo del negocio, no de `bdgeproc` (cobertura no confiable — ver `equipos_fscr.bodegas.responsable_usuario_legado`) |
+| `inventario_respuestas` | 0 | Una fila por (empleado, material); `UNIQUE(empleado_id, material_id)`; `estado` borrador/confirmado; `serial` (texto, nullable) para el número de serie cuando aplica -- ej. computadores -- no es obligatorio para el resto de materiales |
+| `inventario_adjuntos` | 0 | Solo metadata (`storage_path` relativo); el binario vive en disco del servidor, `DOCUMENTS_STORAGE_PATH` |
 
 RLS habilitado sin políticas en las 4 tablas — deny-all salvo `service_role`.
 El backend es el único que puede leer/escribir; cualquier política para

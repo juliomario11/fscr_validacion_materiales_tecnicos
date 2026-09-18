@@ -1,0 +1,342 @@
+<main class="inventario">
+  <header class="inventario__header">
+    <div class="inventario__header-titulo">
+      <img src="logo-fscr.png" alt="FSCR" class="brand-logo" />
+      <div>
+        <h1>Inventario de materiales y herramientas</h1>
+        @if (auth.user(); as usuario) {
+          <p>
+            Hola, <strong>{{ usuario.nombreCompleto }}</strong> (cédula {{ usuario.cedula }})
+            @if (metaEmpleado(); as meta) {
+              <span class="inventario__meta"> — {{ meta }}</span>
+            }
+          </p>
+        }
+      </div>
+    </div>
+    <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  </header>
+
+  @if (errorCarga()) {
+    <p class="alert alert--danger" role="alert">{{ errorCarga() }}</p>
+  }
+
+  @if (cargando()) {
+    <p>Cargando catálogo de materiales...</p>
+  } @else {
+    @if (misPrecargados().length > 0) {
+      <section class="card inventario__precarga">
+        <h2>Materiales que el sistema tiene registrados para ti</h2>
+        <p class="inventario__precarga-ayuda">
+          Confirma si todavía cuentas con cada ítem. No verás ninguna cantidad -- solo dinos si lo tienes o ya no.
+        </p>
+
+        @if (errorPrecarga()) {
+          <p class="alert alert--danger" role="alert">{{ errorPrecarga() }}</p>
+        }
+
+        <ul class="inventario__precarga-lista">
+          @for (respuesta of misPrecargados(); track respuesta.id) {
+            <li class="inventario__precarga-item">
+              <span class="inventario__precarga-material">
+                [{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}
+                @if (respuesta.serial) {
+                  <small>Serial: {{ respuesta.serial }}</small>
+                }
+              </span>
+              <span class="inventario__precarga-acciones">
+                @if (respuesta.estadoPrecarga === 'confirmado') {
+                  <span class="badge badge--exito">Confirmaste que lo tienes</span>
+                } @else if (respuesta.estadoPrecarga === 'ya_no_lo_tiene') {
+                  <span class="badge badge--advertencia">Dijiste que ya no lo tienes</span>
+                }
+                <button
+                  class="btn btn--primary"
+                  type="button"
+                  [disabled]="procesandoPrecargaId() === respuesta.id"
+                  (click)="confirmarPrecarga(respuesta, 'confirmado')"
+                >
+                  Sí, lo tengo
+                </button>
+                <button
+                  class="btn btn--danger"
+                  type="button"
+                  [disabled]="procesandoPrecargaId() === respuesta.id"
+                  (click)="confirmarPrecarga(respuesta, 'ya_no_lo_tiene')"
+                >
+                  Ya no lo tengo
+                </button>
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="inventario__grid">
+      <div class="card inventario__selector">
+        <h2>1. Elige un material o herramienta</h2>
+
+        <label class="field">
+          <span>Buscar por código, descripción o categoría</span>
+          <input
+            type="text"
+            placeholder="Ej. HR00410, guante, categoría..."
+            [ngModel]="filtroTexto()"
+            (ngModelChange)="filtroTexto.set($event)"
+          />
+        </label>
+
+        <div class="inventario__lista">
+          @for (grupo of gruposFiltrados(); track grupo.categoria) {
+            <div class="inventario__grupo">
+              <h3>{{ grupo.categoria }}</h3>
+              <ul>
+                @for (material of grupo.materiales; track material.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="inventario__item"
+                      [class.inventario__item--activo]="materialSeleccionadoId() === material.id"
+                      (click)="seleccionarMaterial(material)"
+                    >
+                      <span>[{{ material.codigo }}] {{ material.descripcion }}</span>
+                      <span class="inventario__item-meta">
+                        {{ material.unidadMedida }}
+                        @if (idsEnLista().has(material.id)) {
+                          <span class="badge">En tu lista</span>
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          } @empty {
+            <p>No hay materiales que coincidan con la búsqueda.</p>
+          }
+        </div>
+      </div>
+
+      <div class="card inventario__detalle">
+        <h2>2. Cantidad que tienes</h2>
+
+        @if (materialSeleccionado(); as material) {
+          <p class="inventario__material-nombre">[{{ material.codigo }}] {{ material.descripcion }}</p>
+          <p class="inventario__unidad">Unidad de medida: {{ material.unidadMedida }}</p>
+
+          <label class="field">
+            <span>Cantidad que tienes</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [ngModel]="cantidad()"
+              (ngModelChange)="cantidad.set($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span>Número de serie (opcional)</span>
+            <input
+              type="text"
+              placeholder="Ej. SN-2024-00123"
+              [ngModel]="serial()"
+              (ngModelChange)="serial.set($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span>Observaciones (opcional)</span>
+            <textarea
+              rows="3"
+              [ngModel]="observaciones()"
+              (ngModelChange)="observaciones.set($event)"
+            ></textarea>
+          </label>
+
+          @if (errorGuardado()) {
+            <p class="alert alert--danger" role="alert">{{ errorGuardado() }}</p>
+          }
+
+          <div class="inventario__acciones-detalle">
+            <button
+              class="btn btn--primary"
+              type="button"
+              [disabled]="!cantidad() || cantidad()! <= 0 || guardando()"
+              (click)="agregarAMiLista()"
+            >
+              {{ guardando() ? 'Guardando...' : (respuestaSeleccionada() ? 'Guardar cambios' : 'Agregar a mi lista') }}
+            </button>
+            <button class="btn btn--ghost" type="button" (click)="limpiarSeleccion()">Cerrar</button>
+          </div>
+
+          @if (respuestaSeleccionada(); as respuesta) {
+            <div class="inventario__evidencias">
+              <h3>Evidencias adjuntas <span class="inventario__opcional">(opcional)</span></h3>
+              <p class="inventario__opcional-texto">
+                Adjuntar una foto o PDF es opcional -- puedes continuar sin adjuntar nada.
+              </p>
+
+              @if (respuesta.adjuntos?.length) {
+                <ul class="inventario__adjuntos-lista">
+                  @for (adjunto of respuesta.adjuntos; track adjunto.id) {
+                    <li class="inventario__adjunto-item">
+                      <span class="inventario__adjunto-nombre">
+                        {{ adjunto.nombreArchivo }}
+                        <small>{{ adjunto.subidoEn | date: 'short' }}</small>
+                      </span>
+                      <span class="inventario__adjunto-acciones">
+                        <button
+                          class="btn btn--ghost"
+                          type="button"
+                          [disabled]="procesandoAdjuntoId() === adjunto.id"
+                          (click)="verAdjunto(adjunto)"
+                        >
+                          Ver
+                        </button>
+                        <button
+                          class="btn btn--ghost"
+                          type="button"
+                          [disabled]="procesandoAdjuntoId() === adjunto.id"
+                          (click)="descargarAdjunto(adjunto)"
+                        >
+                          Descargar
+                        </button>
+                      </span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="inventario__sin-adjuntos">Todavía no has adjuntado evidencia para este material.</p>
+              }
+
+              <label class="field">
+                <span>Adjuntar evidencia (opcional -- foto o PDF)</span>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  [disabled]="subiendoAdjunto()"
+                  (change)="onArchivoSeleccionado($event)"
+                />
+              </label>
+              @if (subiendoAdjunto()) {
+                <p class="inventario__archivo">Subiendo {{ archivo()?.name }}...</p>
+              }
+
+              @if (errorAdjunto()) {
+                <p class="alert alert--danger" role="alert">{{ errorAdjunto() }}</p>
+              }
+            </div>
+          } @else {
+            <p class="inventario__sin-adjuntos">
+              Guarda la cantidad primero para poder adjuntar evidencias (foto o PDF, opcional).
+            </p>
+          }
+        } @else {
+          <p>Selecciona un material de la lista para registrar la cantidad que tienes.</p>
+        }
+      </div>
+    </section>
+
+    <section class="card inventario__mi-lista">
+      <h2>Materiales agregados manualmente</h2>
+
+      @if (misManuales().length === 0) {
+        <p>Todavía no has agregado ningún material adicional a tu lista.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Cantidad</th>
+              <th>Serial</th>
+              <th>Observaciones</th>
+              <th>Adjunto</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (respuesta of misManuales(); track respuesta.id) {
+              <tr>
+                <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+                <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+                <td>{{ respuesta.serial || '—' }}</td>
+                <td>{{ respuesta.observaciones || '—' }}</td>
+                <td>
+                  @if (respuesta.adjuntos?.length) {
+                    <ul class="inventario__adjuntos">
+                      @for (adjunto of respuesta.adjuntos; track adjunto.id) {
+                        <li class="inventario__adjunto-item">
+                          <span class="inventario__adjunto-nombre">
+                            {{ adjunto.nombreArchivo }}
+                            <small>{{ adjunto.subidoEn | date: 'short' }}</small>
+                          </span>
+                          <span class="inventario__adjunto-acciones">
+                            <button
+                              class="btn btn--ghost"
+                              type="button"
+                              [disabled]="procesandoAdjuntoId() === adjunto.id"
+                              (click)="verAdjunto(adjunto)"
+                            >
+                              Ver
+                            </button>
+                            <button
+                              class="btn btn--ghost"
+                              type="button"
+                              [disabled]="procesandoAdjuntoId() === adjunto.id"
+                              (click)="descargarAdjunto(adjunto)"
+                            >
+                              Descargar
+                            </button>
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    Sin adjuntos
+                  }
+                </td>
+                <td class="inventario__fila-acciones">
+                  <button class="btn btn--ghost" type="button" (click)="editar(respuesta)">Editar</button>
+                  <button
+                    class="btn btn--danger"
+                    type="button"
+                    [disabled]="quitandoId() === respuesta.materialId"
+                    (click)="quitar(respuesta)"
+                  >
+                    Quitar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <div class="inventario__continuar">
+        <button class="btn btn--primary" type="button" [disabled]="!puedeContinuar()" (click)="continuar()">
+          Continuar
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (previewUrl(); as url) {
+    <div class="preview-overlay" (click)="cerrarPreview()">
+      <div class="preview-modal" (click)="$event.stopPropagation()">
+        <header class="preview-modal__header">
+          <span>{{ previewNombre() }}</span>
+          <button class="btn btn--ghost" type="button" (click)="cerrarPreview()">Cerrar</button>
+        </header>
+        <div class="preview-modal__body">
+          @if (previewTipo() === 'imagen') {
+            <img [src]="url" [alt]="previewNombre() ?? 'Vista previa del adjunto'" />
+          } @else if (previewTipo() === 'pdf') {
+            <iframe [src]="previewSafeUrl()" title="Vista previa del PDF"></iframe>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</main>

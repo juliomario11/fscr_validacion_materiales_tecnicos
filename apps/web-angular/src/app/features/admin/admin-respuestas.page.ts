@@ -39,7 +39,7 @@ export class AdminRespuestasPage implements OnInit {
 
   protected exportar(): void {
     this.xlsxExport.exportToXlsx<AdminRespuesta>({
-      filename: `respuestas-encuesta-materiales-${timestampArchivo()}`,
+      filename: `respuestas-inventario-materiales-${timestampArchivo()}`,
       sheetName: 'Respuestas',
       columns: [
         { header: 'Cédula', value: (fila) => fila.empleado.cedula },
@@ -51,7 +51,21 @@ export class AdminRespuestasPage implements OnInit {
         { header: 'Unidad', value: (fila) => fila.material.unidadMedida },
         { header: 'Serial', value: (fila) => fila.serial },
         { header: 'Observaciones', value: (fila) => fila.observaciones },
+        { header: 'Origen', value: (fila) => (fila.origen === 'precargado' ? 'Precargado' : 'Manual') },
+        {
+          header: 'Estado precarga',
+          value: (fila) =>
+            fila.origen !== 'precargado'
+              ? null
+              : fila.estadoPrecarga === 'confirmado'
+                ? 'Confirmado'
+                : fila.estadoPrecarga === 'ya_no_lo_tiene'
+                  ? 'Ya no lo tiene'
+                  : 'Sin validar',
+        },
+        { header: 'Cantidad precargada (cron)', value: (fila) => fila.cantidadPrecargada },
         { header: 'Estado', value: (fila) => (fila.estado === 'confirmado' ? 'Confirmado' : 'Borrador') },
+        { header: 'Fuera de fecha', value: (fila) => (fila.fueraDeFecha ? 'Sí' : 'No') },
         { header: 'Adjuntos', value: (fila) => fila.cantidadAdjuntos },
         { header: 'Fecha inicio', value: (fila) => formatFechaCorta(fila.fechaInicio) },
         { header: 'Fecha confirmación', value: (fila) => formatFechaCorta(fila.fechaConfirmacion) },

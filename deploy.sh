@@ -108,7 +108,7 @@ sudo apache2ctl configtest
 sudo systemctl reload apache2
 
 echo
-echo "Listo. La encuesta deberia responder en http://100.74.71.100:$PUBLIC_PORT"
+echo "Listo. El inventario deberia responder en http://100.74.71.100:$PUBLIC_PORT"
 echo "Verificando que los demas sitios (facturas :80/:9100, sgi :8081) sigan intactos:"
 sudo ss -tlnp | grep -E ':80|:8081|:8082|:9100|:18082' || true
 pm2 list

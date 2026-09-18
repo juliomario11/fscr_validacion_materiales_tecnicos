@@ -1,6 +1,6 @@
 # FSCR — Validación de Materiales Técnicos
 
-Encuesta interna para que los técnicos de campo de FSCR declaren, uno por
+Inventario interno para que los técnicos de campo de FSCR declaren, uno por
 uno, qué materiales/herramientas del catálogo técnico tienen actualmente en
 su poder (cantidad, número de serie opcional cuando aplica -- ej.
 computadores --, observaciones y evidencia fotográfica opcional).
@@ -49,11 +49,11 @@ apps/
 
 Decisión de negocio para este primer alcance: **login solo por cédula, sin
 contraseña**. El backend valida que la cédula exista y esté activa en
-`empleados_encuesta` (whitelist de ~113 colaboradores habilitados) y emite
+`empleados_inventario` (whitelist de ~113 colaboradores habilitados) y emite
 una sesión firmada en cookie httpOnly. El `empleadoId` siempre se deriva de
 esa sesión — ningún endpoint acepta un `empleadoId` que venga del cliente.
 
-## Flujo de la encuesta
+## Flujo del inventario
 
 1. El colaborador entra con su cédula.
 2. Busca y selecciona un material del catálogo (358 ítems, 11 categorías),
@@ -96,9 +96,9 @@ git clone https://github.com/juliomario11/fscr_validacion_materiales_tecnicos.gi
 cd fscr_validacion_materiales_tecnicos
 cp apps/api/.env.example apps/api/.env   # completar Supabase real + SESSION_SECRET
 # En apps/api/.env: FSCR_API_PORT=18082, FSCR_SERVE_STATIC=false (Apache sirve los estáticos),
-# DOCUMENTS_STORAGE_PATH=/var/lib/fscr/adjuntos_encuesta_tecnicos (ver mas abajo)
-sudo mkdir -p /var/lib/fscr/adjuntos_encuesta_tecnicos
-sudo chown fscradmin:fscradmin /var/lib/fscr/adjuntos_encuesta_tecnicos
+# DOCUMENTS_STORAGE_PATH=/var/lib/fscr/adjuntos_inventario_tecnicos (ver mas abajo)
+sudo mkdir -p /var/lib/fscr/adjuntos_inventario_tecnicos
+sudo chown fscradmin:fscradmin /var/lib/fscr/adjuntos_inventario_tecnicos
 npm install -g pm2   # si no está ya instalado (fscr_proveedores_factura ya lo instaló)
 chmod +x deploy.sh
 
@@ -125,7 +125,7 @@ Pendiente por confirmar la primera vez que se corra en el servidor real
 reinicio del servidor, igual que ya debería estar hecho para `fscr-api`.
 
 Los adjuntos (fotos/soportes) se guardan en disco, en
-`DOCUMENTS_STORAGE_PATH` (`/var/lib/fscr/adjuntos_encuesta_tecnicos` en el
+`DOCUMENTS_STORAGE_PATH` (`/var/lib/fscr/adjuntos_inventario_tecnicos` en el
 servidor real) — no en Supabase Storage. Debe apuntar a un directorio
 persistente propio de este proyecto (no compartir la ruta de
 `fscr_proveedores_factura`).
@@ -144,12 +144,12 @@ Ver [`ESTRUCTURA.md`](ESTRUCTURA.md) para el detalle de carpetas y
 [`PENDIENTES.md`](PENDIENTES.md) para el backlog. En resumen, quedan fuera
 de este primer alcance (documentado con `TODO` en el código donde aplica):
 
-- Reabrir una encuesta ya confirmada (hoy es definitivo).
+- Reabrir un inventario ya confirmado (hoy es definitivo).
 - Borrado de adjuntos huérfanos en disco al eliminar una respuesta en
   borrador (el registro en BD sí se limpia por `ON DELETE CASCADE`, el
   archivo binario en `DOCUMENTS_STORAGE_PATH` no).
 - Vista/panel para que alguien de negocio consulte los resultados agregados
-  de la encuesta (hoy los datos solo se pueden consultar por SQL directo en
+  del inventario (hoy los datos solo se pueden consultar por SQL directo en
   Supabase).
 - Tests end-to-end del frontend y tests de los adapters de Supabase del
   backend (hoy solo hay un test e2e de humo del módulo de auth/health).

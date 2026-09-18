@@ -6,13 +6,14 @@ import { environment } from '../../../environments/environment';
 import { AdjuntoRespuesta } from '../models/adjunto-respuesta';
 import {
   ConfirmarEnvioResponse,
+  EstadoPrecarga,
   GuardarRespuestaPayload,
   RespuestaMaterial,
 } from '../models/respuesta-material';
 
 /**
  * Guarda `mis-respuestas` en un signal compartido para que la pantalla de
- * encuesta, la de confirmación y la de agradecimiento lean el mismo estado
+ * inventario, la de confirmación y la de agradecimiento lean el mismo estado
  * sin tener que repetir el `GET` en cada navegación (ej. "Volver a editar"
  * no pierde nada porque no se vuelve a pedir al servidor).
  */
@@ -29,6 +30,10 @@ export class RespuestasService {
   public readonly confirmadas = computed(() =>
     this.misRespuestasState().filter((respuesta) => respuesta.estado === 'confirmado'),
   );
+  /** Ítems que vinieron del cron de las 5 AM y todavía no se validaron ("sí lo tengo" / "ya no lo tengo"). */
+  public readonly precargadosPendientes = computed(() =>
+    this.borrador().filter((respuesta) => respuesta.origen === 'precargado' && respuesta.estadoPrecarga === null),
+  );
 
   public cargarMisRespuestas(): Observable<RespuestaMaterial[]> {
     return this.http
@@ -42,6 +47,15 @@ export class RespuestasService {
   ): Observable<RespuestaMaterial> {
     return this.http
       .put<RespuestaMaterial>(`${environment.apiBaseUrl}/mis-respuestas/${materialId}`, payload)
+      .pipe(tap((respuesta) => this.upsertLocal(respuesta)));
+  }
+
+  /** "Sí lo tengo" / "ya no lo tengo" sobre un ítem precargado puntual (identificado por su `id` de fila, no por `materialId`). */
+  public confirmarPrecarga(respuestaId: number, estado: EstadoPrecarga): Observable<RespuestaMaterial> {
+    return this.http
+      .patch<RespuestaMaterial>(`${environment.apiBaseUrl}/mis-respuestas/precargados/${respuestaId}`, {
+        estado,
+      })
       .pipe(tap((respuesta) => this.upsertLocal(respuesta)));
   }
 
@@ -69,13 +83,16 @@ export class RespuestasService {
     });
   }
 
+  /** Borra la fila MANUAL de este material (el backend nunca borra precargados por esta vía -- solo hay una fila manual por material). */
   public eliminarRespuesta(materialId: number): Observable<void> {
     return this.http
       .delete<void>(`${environment.apiBaseUrl}/mis-respuestas/${materialId}`)
       .pipe(
         tap(() =>
           this.misRespuestasState.update((lista) =>
-            lista.filter((respuesta) => respuesta.materialId !== materialId),
+            lista.filter(
+              (respuesta) => !(respuesta.materialId === materialId && respuesta.origen === 'manual'),
+            ),
           ),
         ),
       );
@@ -93,9 +110,16 @@ export class RespuestasService {
       );
   }
 
+  /**
+   * Empareja por `id` (único por fila), NUNCA por `materialId` -- desde que
+   * existe la precarga, un mismo material puede tener varias filas (varias
+   * unidades serializadas precargadas, o una precargada + una manual). Un
+   * `id` que todavía no está en la lista local es, por definición, una fila
+   * recién creada (insert), no una actualización.
+   */
   private upsertLocal(respuesta: RespuestaMaterial): void {
     this.misRespuestasState.update((lista) => {
-      const index = lista.findIndex((item) => item.materialId === respuesta.materialId);
+      const index = lista.findIndex((item) => item.id === respuesta.id);
       if (index === -1) return [...lista, respuesta];
       const copia = [...lista];
       copia[index] = respuesta;
@@ -106,7 +130,7 @@ export class RespuestasService {
   private agregarAdjuntoLocal(materialId: number, adjunto: AdjuntoRespuesta): void {
     this.misRespuestasState.update((lista) =>
       lista.map((respuesta) =>
-        respuesta.materialId === materialId
+        respuesta.materialId === materialId && respuesta.origen === 'manual'
           ? { ...respuesta, adjuntos: [...(respuesta.adjuntos ?? []), adjunto] }
           : respuesta,
       ),
