@@ -10,3 +10,11 @@ coverage/
 # Datos de RRHH reales (113 empleados) -- nunca debe subirse al repo
 Personal_Completo.xlsx
 ~$Personal_Completo.xlsx
+
+# Extracto real de equipos asignados por cédula (activos serializados,
+# costos, bodegas) -- nunca debe subirse al repo
+equipos_asignados_encuesta.xlsx
+~$equipos_asignados_encuesta.xlsx
+
+# Lista de cédulas de prueba a reiniciar en Supabase, uso local del usuario
+borrar.txt
