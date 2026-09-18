@@ -180,6 +180,12 @@
   color: var(--danger);
 }
 
+.admin__pendiente {
+  color: var(--text-soft);
+  font-style: italic;
+  font-size: 12px;
+}
+
 .admin__adjuntos-lista {
   list-style: none;
   margin: 0;

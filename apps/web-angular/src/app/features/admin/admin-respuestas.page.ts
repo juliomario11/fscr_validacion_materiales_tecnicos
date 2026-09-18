@@ -61,11 +61,27 @@ export class AdminRespuestasPage implements OnInit, OnDestroy {
         (respuesta) => !!respuesta.serialSistema && !!respuesta.serial && respuesta.serialSistema !== respuesta.serial,
       ).length,
       cantidadConDiscrepancia: todas.filter(
-        (respuesta) => respuesta.cantidadPrecargada !== null && respuesta.cantidad !== respuesta.cantidadPrecargada,
+        (respuesta) =>
+          !this.pendienteDeValidar(respuesta) &&
+          respuesta.cantidadPrecargada !== null &&
+          respuesta.cantidad !== respuesta.cantidadPrecargada,
       ).length,
       fueraDeFecha: todas.filter((respuesta) => respuesta.fueraDeFecha).length,
     };
   });
+
+  /**
+   * `true` si es una fila precargada que el técnico todavía no validó
+   * ("sí lo tengo"/"ya no lo tengo"). Mientras esté así, `cantidad` es un
+   * valor PLACEHOLDER fijo (`1`, ver `insertPrecargados` -- "un renglón
+   * por serial precargado = 1 unidad a validar"), no una respuesta real
+   * del técnico -- comparar ese `1` contra `cantidadPrecargada` produce
+   * un "Faltan/Sobran" falso. Por eso ni la tabla ni el resumen deben
+   * tratarlo como una discrepancia real hasta que se valide.
+   */
+  protected pendienteDeValidar(respuesta: AdminRespuesta): boolean {
+    return respuesta.origen === 'precargado' && respuesta.estadoPrecarga === null;
+  }
 
   protected readonly procesandoAdjuntoId = signal<number | null>(null);
   protected readonly errorAdjunto = signal<string | null>(null);
@@ -198,7 +214,10 @@ export class AdminRespuestasPage implements OnInit, OnDestroy {
         { header: 'Cantidad precargada (cron)', value: (fila) => fila.cantidadPrecargada },
         {
           header: 'Diferencia de cantidad',
-          value: (fila) => (fila.cantidadPrecargada !== null ? fila.cantidad - fila.cantidadPrecargada : null),
+          value: (fila) =>
+            this.pendienteDeValidar(fila) || fila.cantidadPrecargada === null
+              ? null
+              : fila.cantidad - fila.cantidadPrecargada,
         },
         { header: 'Estado', value: (fila) => (fila.estado === 'confirmado' ? 'Confirmado' : 'Borrador') },
         { header: 'Fuera de fecha', value: (fila) => (fila.fueraDeFecha ? 'Sí' : 'No') },

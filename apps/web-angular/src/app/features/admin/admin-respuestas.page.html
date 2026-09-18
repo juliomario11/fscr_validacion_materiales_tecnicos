@@ -102,23 +102,31 @@
                 {{ respuesta.cantidadPrecargada !== null ? respuesta.cantidadPrecargada + ' ' + respuesta.material.unidadMedida : '—' }}
               </td>
               <td>
-                {{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}
-                @if (respuesta.cantidadPrecargada !== null && respuesta.cantidad !== respuesta.cantidadPrecargada) {
-                  <br />
-                  <span class="badge badge--advertencia">
-                    @if (respuesta.cantidad < respuesta.cantidadPrecargada) {
-                      Faltan {{ respuesta.cantidadPrecargada - respuesta.cantidad }}
-                    } @else {
-                      Sobran {{ respuesta.cantidad - respuesta.cantidadPrecargada }}
-                    }
-                  </span>
+                @if (pendienteDeValidar(respuesta)) {
+                  <span class="admin__pendiente">Pendiente de validar</span>
+                } @else {
+                  {{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}
+                  @if (respuesta.cantidadPrecargada !== null && respuesta.cantidad !== respuesta.cantidadPrecargada) {
+                    <br />
+                    <span class="badge badge--advertencia">
+                      @if (respuesta.cantidad < respuesta.cantidadPrecargada) {
+                        Faltan {{ respuesta.cantidadPrecargada - respuesta.cantidad }}
+                      } @else {
+                        Sobran {{ respuesta.cantidad - respuesta.cantidadPrecargada }}
+                      }
+                    </span>
+                  }
                 }
               </td>
               <td>{{ respuesta.serialSistema || '—' }}</td>
               <td>
-                {{ respuesta.serial || '—' }}
-                @if (respuesta.serialSistema && respuesta.serial && respuesta.serialSistema !== respuesta.serial) {
-                  <br /><span class="badge badge--advertencia">Corregido</span>
+                @if (pendienteDeValidar(respuesta)) {
+                  <span class="admin__pendiente">Pendiente de validar</span>
+                } @else {
+                  {{ respuesta.serial || '—' }}
+                  @if (respuesta.serialSistema && respuesta.serial && respuesta.serialSistema !== respuesta.serial) {
+                    <br /><span class="badge badge--advertencia">Corregido</span>
+                  }
                 }
               </td>
               <td>{{ respuesta.observaciones || '—' }}</td>
