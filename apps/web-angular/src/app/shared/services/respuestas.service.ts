@@ -87,6 +87,20 @@ export class RespuestasService {
   }
 
   /**
+   * Quita una decisión que todavía no es válida (ej. "ya no lo tengo" sin
+   * observaciones todavía) -- así `faltanDecisionesPrecarga` sigue
+   * bloqueando "Continuar" hasta que se complete correctamente.
+   */
+  public eliminarDecisionPrecargaLocal(respuestaId: number): void {
+    this.decisionesPrecargaState.update((mapa) => {
+      if (!mapa.has(respuestaId)) return mapa;
+      const copia = new Map(mapa);
+      copia.delete(respuestaId);
+      return copia;
+    });
+  }
+
+  /**
    * Envía TODAS las decisiones locales al backend (una llamada `PATCH` por
    * ítem, en paralelo) -- se llama justo antes de la confirmación global
    * (`confirmarEnvio`). Si no hay ninguna decisión pendiente, resuelve de
@@ -102,7 +116,7 @@ export class RespuestasService {
           estado: decision.estado,
           cantidad: decision.estado === 'confirmado' ? decision.cantidad : undefined,
           serial: decision.estado === 'confirmado' ? decision.serial || undefined : undefined,
-          observaciones: decision.estado === 'confirmado' ? decision.observaciones || undefined : undefined,
+          observaciones: decision.observaciones || undefined,
         })
         .pipe(tap((respuesta) => this.upsertLocal(respuesta))),
     );

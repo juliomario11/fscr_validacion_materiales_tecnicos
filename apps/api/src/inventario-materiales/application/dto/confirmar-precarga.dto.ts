@@ -20,7 +20,12 @@ export class ConfirmarPrecargaRequestDto {
   @MaxLength(120)
   public serial?: string;
 
-  /** Observaciones opcionales sobre este ítem precargado. */
+  /**
+   * Opcionales cuando estado='confirmado'; OBLIGATORIAS cuando
+   * estado='ya_no_lo_tiene' -- esa parte de la regla se valida en
+   * `ConfirmarPrecargaUseCase` (no aquí vía decorador) porque depende del
+   * valor de otro campo del mismo DTO.
+   */
   @IsOptional()
   @IsString()
   @MaxLength(2000)

@@ -65,6 +65,12 @@ export class InventarioPage implements OnInit, OnDestroy {
   private readonly observacionesPrecarga = signal<ReadonlyMap<number, string>>(new Map());
   /** Ids de ítems precargados donde el técnico marcó el check "¿Deseas adjuntar un archivo?" -- solo ahí se muestra el `<input type="file">`. */
   private readonly quiereAdjuntarPrecargaState = signal<ReadonlySet<number>>(new Set());
+  /**
+   * Ids de ítems precargados donde el técnico pulsó "Ya no lo tengo" --
+   * despliega el campo de observaciones (obligatorio) aunque todavía no haya
+   * una decisión LOCAL válida (esa solo se crea una vez que escribe algo).
+   */
+  private readonly eligiendoNegativaState = signal<ReadonlySet<number>>(new Set());
 
   protected readonly previewNombre = signal<string | null>(null);
   protected readonly previewTipo = signal<TipoPreview | null>(null);
@@ -121,6 +127,14 @@ export class InventarioPage implements OnInit, OnDestroy {
   protected readonly misPrecargados = computed(() =>
     this.respuestasService.borrador().filter((respuesta) => respuesta.origen === 'precargado'),
   );
+
+  /** "X de Y validados" -- para la barra de progreso de la sección de precarga. */
+  protected readonly progresoPrecarga = computed(() => {
+    const decisiones = this.respuestasService.decisionesPrecarga();
+    const precargados = this.misPrecargados();
+    const validados = precargados.filter((respuesta) => decisiones.has(respuesta.id)).length;
+    return { total: precargados.length, validados };
+  });
 
   protected readonly idsEnLista = computed(
     () => new Set(this.respuestasService.borrador().map((respuesta) => respuesta.materialId)),
@@ -327,7 +341,11 @@ export class InventarioPage implements OnInit, OnDestroy {
 
   protected establecerObservacionesPrecarga(respuesta: RespuestaMaterial, valor: string): void {
     this.observacionesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, valor));
-    this.reafirmarDecisionSiConfirmado(respuesta);
+    if (this.eligiendoNegativa(respuesta.id)) {
+      this.actualizarDecisionNegativa(respuesta);
+    } else {
+      this.reafirmarDecisionSiConfirmado(respuesta);
+    }
   }
 
   protected decisionPrecarga(respuestaId: number) {
@@ -337,6 +355,11 @@ export class InventarioPage implements OnInit, OnDestroy {
   /** La sección de detalle (cantidad/serial/observaciones/adjuntar) solo se despliega una vez que el técnico dijo "sí, lo tengo" -- antes de eso solo se ven los dos botones. */
   protected precargaExpandida(respuestaId: number): boolean {
     return this.decisionPrecarga(respuestaId)?.estado === 'confirmado';
+  }
+
+  /** El bloque de "por qué ya no lo tienes" se despliega apenas se pulsa el botón, aunque todavía no haya una decisión LOCAL válida (esa recién se crea cuando escribe la observación). */
+  protected eligiendoNegativa(respuestaId: number): boolean {
+    return this.eligiendoNegativaState().has(respuestaId);
   }
 
   protected quiereAdjuntarPrecarga(respuestaId: number): boolean {
@@ -358,21 +381,28 @@ export class InventarioPage implements OnInit, OnDestroy {
   /**
    * El técnico (o el supervisor, en la misma sesión) valida un ítem
    * precargado puntual: "sí lo tengo" (revela cantidad/serial/observaciones,
-   * con cantidad=1 por defecto) o "ya no lo tengo" (colapsa cualquier
-   * detalle que se hubiera abierto). Esto SOLO queda en memoria
-   * (`RespuestasService.establecerDecisionPrecargaLocal`) -- nada se
-   * escribe en la BD hasta confirmar el envío completo. Se puede cambiar de
-   * opinión pulsando el otro botón en cualquier momento.
+   * con cantidad=1 por defecto) o "ya no lo tengo" (revela observaciones,
+   * OBLIGATORIAS -- no se guarda ninguna decisión hasta que las escriba).
+   * Esto SOLO queda en memoria (`RespuestasService.establecerDecisionPrecargaLocal`)
+   * -- nada se escribe en la BD hasta confirmar el envío completo. Se puede
+   * cambiar de opinión pulsando el otro botón en cualquier momento.
    */
   protected decidirPrecarga(respuesta: RespuestaMaterial, estado: EstadoPrecarga): void {
     this.errorPrecarga.set(null);
 
     if (estado === 'ya_no_lo_tiene') {
-      this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, { estado, cantidad: 0 });
       this.alternarAdjuntarPrecarga(respuesta.id, false);
+      this.eligiendoNegativaState.update((set) => new Set(set).add(respuesta.id));
+      this.actualizarDecisionNegativa(respuesta);
       return;
     }
 
+    this.eligiendoNegativaState.update((set) => {
+      if (!set.has(respuesta.id)) return set;
+      const copia = new Set(set);
+      copia.delete(respuesta.id);
+      return copia;
+    });
     if (!this.cantidadesPrecarga().has(respuesta.id)) {
       this.cantidadesPrecarga.update((mapa) => new Map(mapa).set(respuesta.id, 1));
     }
@@ -396,6 +426,25 @@ export class InventarioPage implements OnInit, OnDestroy {
       cantidad,
       serial: this.serialPrecarga(respuesta).trim() || null,
       observaciones: this.observacionesPrecargaValor(respuesta.id).trim() || null,
+    });
+  }
+
+  /**
+   * Solo guarda la decisión "ya no lo tengo" cuando ya escribió una
+   * observación -- mientras esté vacía, se quita cualquier decisión previa
+   * (si la había) para que `faltanDecisionesPrecarga` siga bloqueando
+   * "Continuar" hasta que la complete.
+   */
+  private actualizarDecisionNegativa(respuesta: RespuestaMaterial): void {
+    const observaciones = this.observacionesPrecargaValor(respuesta.id).trim();
+    if (!observaciones) {
+      this.respuestasService.eliminarDecisionPrecargaLocal(respuesta.id);
+      return;
+    }
+    this.respuestasService.establecerDecisionPrecargaLocal(respuesta.id, {
+      estado: 'ya_no_lo_tiene',
+      cantidad: 0,
+      observaciones,
     });
   }
 

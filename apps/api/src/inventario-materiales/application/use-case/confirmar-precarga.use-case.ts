@@ -8,6 +8,7 @@ import {
 } from '../../domain/repository/respuestas-inventario.repository';
 import {
   CantidadPrecargaInvalidaException,
+  ObservacionesPrecargaRequeridasException,
   RespuestaConfirmadaException,
   RespuestaNoEncontradaException,
 } from '../exception/inventario-materiales.exceptions';
@@ -49,13 +50,19 @@ export class ConfirmarPrecargaUseCase {
     if (estadoPrecarga === 'confirmado' && (cantidad === null || cantidad < 1)) {
       throw new CantidadPrecargaInvalidaException();
     }
+    // Si dice que ya no lo tiene, exigimos que explique por qué -- queda
+    // como trazabilidad para el supervisor/admin, no se puede dejar en blanco.
+    if (estadoPrecarga === 'ya_no_lo_tiene' && (!observaciones || observaciones.trim() === '')) {
+      throw new ObservacionesPrecargaRequeridasException();
+    }
     const cantidadFinal = estadoPrecarga === 'confirmado' ? (cantidad as number) : 0;
 
-    // La corrección de serial/observaciones solo tiene sentido cuando el
-    // técnico dice que SÍ tiene el ítem -- si dice que ya no lo tiene, no
-    // se tocan (undefined = no incluir en el PATCH, deja lo que había).
+    // La corrección de serial solo tiene sentido cuando el técnico dice que
+    // SÍ tiene el ítem -- si dice que ya no lo tiene, no se toca (undefined =
+    // no incluir en el PATCH, deja lo que había). Las observaciones sí se
+    // escriben en ambos casos (opcionales al confirmar, obligatorias al negar).
     const serialFinal = estadoPrecarga === 'confirmado' ? serial : undefined;
-    const observacionesFinal = estadoPrecarga === 'confirmado' ? observaciones : undefined;
+    const observacionesFinal = observaciones;
 
     await this.respuestasRepository.actualizarEstadoPrecarga(
       respuestaId,

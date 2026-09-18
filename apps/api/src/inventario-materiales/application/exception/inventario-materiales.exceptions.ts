@@ -67,6 +67,16 @@ export class CantidadPrecargaInvalidaException extends Error {
   }
 }
 
+/** Se lanza al marcar un ítem precargado como "ya no lo tengo" sin explicar por qué (observaciones obligatorias en ese caso). */
+export class ObservacionesPrecargaRequeridasException extends Error {
+  public constructor(
+    message = 'Debes indicar una observación explicando por qué ya no cuentas con este ítem.',
+  ) {
+    super(message);
+    this.name = 'ObservacionesPrecargaRequeridasException';
+  }
+}
+
 /** Nombre de archivo inseguro, extensión no permitida, o contenido que no coincide con la extensión declarada (magic bytes vía `file-type`). */
 export class AdjuntoInvalidoException extends Error {
   public constructor(message = 'El archivo adjunto no es válido.') {

@@ -31,24 +31,44 @@
           Confirma si todavía cuentas con cada ítem. No verás ninguna cantidad -- solo dinos si lo tienes o ya no.
         </p>
 
+        <div class="inventario__precarga-progreso">
+          <div class="inventario__precarga-progreso-barra">
+            <div
+              class="inventario__precarga-progreso-relleno"
+              [style.width.%]="progresoPrecarga().total ? (progresoPrecarga().validados / progresoPrecarga().total) * 100 : 0"
+            ></div>
+          </div>
+          <span class="inventario__precarga-progreso-texto">
+            {{ progresoPrecarga().validados }} de {{ progresoPrecarga().total }} validados
+          </span>
+        </div>
+
         @if (errorPrecarga()) {
           <p class="alert alert--danger" role="alert">{{ errorPrecarga() }}</p>
         }
 
         <ul class="inventario__precarga-lista">
           @for (respuesta of misPrecargados(); track respuesta.id) {
-            <li class="inventario__precarga-item">
+            <li
+              class="inventario__precarga-item"
+              [class.inventario__precarga-item--confirmado]="precargaExpandida(respuesta.id)"
+              [class.inventario__precarga-item--negativo]="
+                decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene' || eligiendoNegativa(respuesta.id)
+              "
+            >
               <div class="inventario__precarga-encabezado">
                 <span class="inventario__precarga-material">
                   [{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}
                   @if (respuesta.serialSistema) {
-                    <small>Serial del sistema: {{ respuesta.serialSistema }}</small>
+                    <small>Serial del sistema: <code>{{ respuesta.serialSistema }}</code></small>
                   }
                 </span>
 
                 <span class="inventario__precarga-botones">
                   @if (decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene') {
                     <span class="badge badge--advertencia">Ya no lo tienes</span>
+                  } @else if (eligiendoNegativa(respuesta.id)) {
+                    <span class="badge badge--advertencia">Falta explicar por qué</span>
                   }
                   <button
                     class="btn"
@@ -57,16 +77,16 @@
                     [class.btn--ghost]="!precargaExpandida(respuesta.id)"
                     (click)="decidirPrecarga(respuesta, 'confirmado')"
                   >
-                    Sí, lo tengo
+                    <span aria-hidden="true">✓</span> Sí, lo tengo
                   </button>
                   <button
                     class="btn"
                     type="button"
-                    [class.btn--danger]="decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene'"
-                    [class.btn--ghost]="decisionPrecarga(respuesta.id)?.estado !== 'ya_no_lo_tiene'"
+                    [class.btn--danger]="decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene' || eligiendoNegativa(respuesta.id)"
+                    [class.btn--ghost]="!(decisionPrecarga(respuesta.id)?.estado === 'ya_no_lo_tiene' || eligiendoNegativa(respuesta.id))"
                     (click)="decidirPrecarga(respuesta, 'ya_no_lo_tiene')"
                   >
-                    Ya no lo tengo
+                    <span aria-hidden="true">✕</span> Ya no lo tengo
                   </button>
                 </span>
               </div>
@@ -158,6 +178,21 @@
                         <p class="inventario__archivo">Subiendo archivo...</p>
                       }
                     </div>
+                  }
+                </div>
+              } @else if (eligiendoNegativa(respuesta.id)) {
+                <div class="inventario__precarga-detalle inventario__precarga-detalle--negativo">
+                  <label class="field">
+                    <span>Observaciones <span class="inventario__requerido">(obligatorias)</span></span>
+                    <textarea
+                      rows="2"
+                      placeholder="Cuéntanos qué pasó con este ítem (se dañó, se lo entregaste a otra persona, se perdió, etc.)"
+                      [ngModel]="observacionesPrecargaValor(respuesta.id)"
+                      (ngModelChange)="establecerObservacionesPrecarga(respuesta, $event)"
+                    ></textarea>
+                  </label>
+                  @if (!decisionPrecarga(respuesta.id)) {
+                    <p class="inventario__precarga-hint">Escribe una observación para poder continuar.</p>
                   }
                 </div>
               }

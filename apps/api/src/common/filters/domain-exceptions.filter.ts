@@ -9,6 +9,7 @@ import {
   CredencialInvalidaException,
   LimiteAdjuntosExcedidoException,
   MaterialNoEncontradoException,
+  ObservacionesPrecargaRequeridasException,
   PrecargaSinValidarException,
   RespuestaConfirmadaException,
   RespuestaNoEncontradaException,
@@ -99,7 +100,8 @@ export class DomainExceptionsFilter implements ExceptionFilter {
     if (
       exception instanceof AdjuntoInvalidoException ||
       exception instanceof LimiteAdjuntosExcedidoException ||
-      exception instanceof CantidadPrecargaInvalidaException
+      exception instanceof CantidadPrecargaInvalidaException ||
+      exception instanceof ObservacionesPrecargaRequeridasException
     ) {
       return { statusCode: HttpStatus.BAD_REQUEST, message: exception.message, error: 'Bad Request' };
     }
