@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 import { RespuestasService } from '../../shared/services/respuestas.service';
 
-const SEGUNDOS_AUTOCIERRE = 30;
+/** Solo en esta pantalla: sin aviso visible, a los 2 minutos se cierra la sesión sola. */
+const MS_AUTOCIERRE = 2 * 60 * 1000;
 
 @Component({
   selector: 'app-encuesta-gracias-page',
@@ -18,14 +19,7 @@ export class EncuestaGraciasPage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
 
   protected readonly cargando = signal(true);
-
-  /**
-   * Cuenta regresiva para el cierre automático de sesión; `null` cuando el
-   * usuario ya la canceló con "No, quiero revisar" (las respuestas siguen
-   * confirmadas y no editables -- esto solo evita el logout automático).
-   */
-  protected readonly segundosRestantes = signal<number | null>(null);
-  private intervaloId: ReturnType<typeof setInterval> | null = null;
+  private timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   public ngOnInit(): void {
     // `confirmarEnvio()` (invocado en la pantalla anterior) ya deja las
@@ -34,53 +28,39 @@ export class EncuestaGraciasPage implements OnInit, OnDestroy {
     // llega a esta pantalla directamente (ej. refresh de página).
     if (this.respuestasService.confirmadas().length > 0) {
       this.cargando.set(false);
-      this.iniciarCuentaRegresiva();
+      this.iniciarAutocierre();
       return;
     }
     this.cargando.set(true);
     this.respuestasService.cargarMisRespuestas().subscribe({
       next: () => {
         this.cargando.set(false);
-        this.iniciarCuentaRegresiva();
+        this.iniciarAutocierre();
       },
       error: () => {
         this.cargando.set(false);
-        this.iniciarCuentaRegresiva();
+        this.iniciarAutocierre();
       },
     });
   }
 
   public ngOnDestroy(): void {
-    this.detenerCuentaRegresiva();
+    this.detenerAutocierre();
   }
 
-  private iniciarCuentaRegresiva(): void {
-    this.segundosRestantes.set(SEGUNDOS_AUTOCIERRE);
-    this.intervaloId = setInterval(() => {
-      const restante = (this.segundosRestantes() ?? 0) - 1;
-      if (restante <= 0) {
-        this.cerrarSesion();
-        return;
-      }
-      this.segundosRestantes.set(restante);
-    }, 1000);
-  }
-
-  /** Detiene el cierre automático -- NO reabre las respuestas, que siguen confirmadas y no editables. */
-  protected seguirAqui(): void {
-    this.detenerCuentaRegresiva();
-    this.segundosRestantes.set(null);
+  private iniciarAutocierre(): void {
+    this.timeoutId = setTimeout(() => this.cerrarSesion(), MS_AUTOCIERRE);
   }
 
   protected cerrarSesion(): void {
-    this.detenerCuentaRegresiva();
+    this.detenerAutocierre();
     this.auth.logout().subscribe(() => void this.router.navigateByUrl('/login'));
   }
 
-  private detenerCuentaRegresiva(): void {
-    if (this.intervaloId !== null) {
-      clearInterval(this.intervaloId);
-      this.intervaloId = null;
+  private detenerAutocierre(): void {
+    if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
     }
   }
 }

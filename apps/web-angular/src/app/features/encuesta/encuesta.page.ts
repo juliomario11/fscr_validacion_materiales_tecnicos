@@ -121,33 +121,42 @@ export class EncuestaPage implements OnInit, OnDestroy {
     this.cargarDatos();
   }
 
+  /**
+   * Secuencial a propósito (mis-respuestas primero, catálogo después) y NO
+   * en paralelo: así el catálogo de selección jamás llega a pedirse -- ni
+   * por lo tanto a pintarse -- cuando el empleado ya confirmó todo (ej.
+   * vuelve a loguearse con su cédula tiempo después). Con las dos llamadas
+   * en paralelo existía una ventana real en la que esta pantalla se
+   * alcanzaba a mostrar antes de que resolviera la redirección.
+   */
   protected cargarDatos(): void {
     this.cargando.set(true);
     this.errorCarga.set(null);
 
-    let pendientes = 2;
-    const onDone = () => {
-      pendientes -= 1;
-      if (pendientes === 0) this.cargando.set(false);
-    };
-    const onError = () => {
-      this.errorCarga.set('No fue posible cargar la información de la encuesta. Recarga la página.');
-      onDone();
-    };
-
-    this.materialesService.cargarCatalogo().subscribe({ next: onDone, error: onError });
     this.respuestasService.cargarMisRespuestas().subscribe({
       next: () => {
-        // Ya confirmó todo (sin nada en borrador) -- ej. vuelve a loguearse
-        // con su cédula tiempo después. Se le muestra de una vez lo que ya
-        // cargó, en vez del catálogo para seleccionar materiales.
-        if (this.respuestasService.borrador().length === 0 && this.respuestasService.confirmadas().length > 0) {
+        const yaConfirmoTodo =
+          this.respuestasService.borrador().length === 0 && this.respuestasService.confirmadas().length > 0;
+        if (yaConfirmoTodo) {
           void this.router.navigateByUrl('/encuesta/gracias');
           return;
         }
-        onDone();
+        this.cargarCatalogo();
       },
-      error: onError,
+      error: () => {
+        this.errorCarga.set('No fue posible cargar la información de la encuesta. Recarga la página.');
+        this.cargando.set(false);
+      },
+    });
+  }
+
+  private cargarCatalogo(): void {
+    this.materialesService.cargarCatalogo().subscribe({
+      next: () => this.cargando.set(false),
+      error: () => {
+        this.errorCarga.set('No fue posible cargar la información de la encuesta. Recarga la página.');
+        this.cargando.set(false);
+      },
     });
   }
 

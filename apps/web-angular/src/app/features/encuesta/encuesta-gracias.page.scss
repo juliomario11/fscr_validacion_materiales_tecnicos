@@ -30,19 +30,6 @@
   text-align: left;
 }
 
-.gracias__aviso {
-  display: grid;
-  gap: 10px;
+.gracias__aviso-solo-lectura {
   text-align: left;
-}
-
-.gracias__aviso p {
-  margin: 0;
-}
-
-.gracias__aviso-acciones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
 }

@@ -14,22 +14,9 @@
     }
 
     @if (!cargando()) {
-      @if (segundosRestantes(); as segundos) {
-        <div class="alert alert--warning gracias__aviso" role="alert">
-          <p>
-            Por seguridad, tu sesión se cerrará automáticamente en
-            <strong>{{ segundos }}s</strong> si no respondes.
-          </p>
-          <div class="gracias__aviso-acciones">
-            <button class="btn btn--ghost" type="button" (click)="seguirAqui()">No, quiero revisar</button>
-            <button class="btn btn--primary" type="button" (click)="cerrarSesion()">Cerrar sesión ahora</button>
-          </div>
-        </div>
-      } @else {
-        <p class="alert alert--warning gracias__aviso-solo-lectura" role="alert">
-          Tu encuesta ya fue confirmada y no se puede editar. Este es el resumen de lo que registraste.
-        </p>
-      }
+      <p class="alert alert--warning gracias__aviso-solo-lectura" role="alert">
+        Tu encuesta ya fue confirmada y no se puede editar. Este es el resumen de lo que registraste.
+      </p>
     }
 
     @if (cargando()) {
