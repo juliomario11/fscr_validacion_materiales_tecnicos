@@ -21,8 +21,8 @@ export interface ArchivoLeido {
 
 /** Puerto de storage de adjuntos -- implementado por `FilesystemAdjuntosStorage` (disco del servidor, `DOCUMENTS_STORAGE_PATH`). */
 export interface AdjuntosStoragePort {
-  /** Sube el binario bajo `${empleadoId}/${respuestaId}/${archivoOpaco}` (dentro de `DOCUMENTS_STORAGE_PATH`) y devuelve la ruta relativa resultante. */
-  subir(empleadoId: number, respuestaId: number, archivo: ArchivoASubir): Promise<ArchivoSubido>;
+  /** Sube el binario bajo `${cedula}/${respuestaId}/${archivoOpaco}` (dentro de `DOCUMENTS_STORAGE_PATH`) y devuelve la ruta relativa resultante. */
+  subir(cedula: string, respuestaId: number, archivo: ArchivoASubir): Promise<ArchivoSubido>;
   /** Abre un stream de lectura para `storagePath` (el valor ya persistido en `encuesta_adjuntos.storage_path`), para servirlo por HTTP. */
   leer(storagePath: string): Promise<ArchivoLeido>;
 }

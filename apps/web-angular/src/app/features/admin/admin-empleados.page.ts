@@ -6,6 +6,7 @@ import { AdminEmpleado } from '../../shared/models/admin-empleado';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import { AdminEmpleadosService } from '../../shared/services/admin-empleados.service';
 import { XlsxExportService } from '../../shared/services/xlsx-export.service';
+import { formatFechaCorta } from '../../shared/utils/formato-fecha';
 
 const ESTADO_LABEL: Record<AdminEmpleado['estado'], string> = {
   sin_iniciar: 'Sin iniciar',
@@ -58,7 +59,7 @@ export class AdminEmpleadosPage implements OnInit {
         { header: 'Proyecto', value: (fila) => fila.proyecto },
         { header: 'Estado', value: (fila) => this.estadoLabel(fila.estado) },
         { header: 'Cantidad de ítems', value: (fila) => fila.cantidadItems },
-        { header: 'Fecha de confirmación', value: (fila) => fila.fechaConfirmacion },
+        { header: 'Fecha de confirmación', value: (fila) => formatFechaCorta(fila.fechaConfirmacion) },
       ],
       rows: this.empleados(),
     });

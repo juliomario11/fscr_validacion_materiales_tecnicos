@@ -12,6 +12,7 @@ import {
   ensureMimeMatchesExtension,
   getExtension,
   resolveInsideBase,
+  sanitizeCedulaParaCarpeta,
 } from '../../application/services/adjunto-validation';
 import {
   AdjuntosStoragePort,
@@ -52,7 +53,7 @@ export class FilesystemAdjuntosStorage implements AdjuntosStoragePort {
   }
 
   public async subir(
-    empleadoId: number,
+    cedula: string,
     respuestaId: number,
     archivo: ArchivoASubir,
   ): Promise<ArchivoSubido> {
@@ -71,8 +72,11 @@ export class FilesystemAdjuntosStorage implements AdjuntosStoragePort {
 
     const nombreArchivo = buildStorageId(archivo.nombreOriginal, allowed);
     // Se guarda con `/` literal (path.posix) independientemente del SO --
-    // es el valor que persiste en `encuesta_adjuntos.storage_path`.
-    const relativePath = path.posix.join(String(empleadoId), String(respuestaId), nombreArchivo);
+    // es el valor que persiste en `encuesta_adjuntos.storage_path`. Carpeta
+    // de primer nivel por cédula (no por el id interno del empleado) para
+    // que el filesystem del servidor sea legible por un humano.
+    const carpetaEmpleado = sanitizeCedulaParaCarpeta(cedula);
+    const relativePath = path.posix.join(carpetaEmpleado, String(respuestaId), nombreArchivo);
     const destino = resolveInsideBase(this.baseDir, relativePath);
 
     await fs.promises.mkdir(path.dirname(destino), { recursive: true });

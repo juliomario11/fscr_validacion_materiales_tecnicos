@@ -127,6 +127,21 @@ export async function ensureMimeMatchesExtension(
   throw new AdjuntoInvalidoException('Extensión no permitida');
 }
 
+const CEDULA_INVALID = /[^a-zA-Z0-9-]+/g;
+
+/**
+ * Sanea la cédula para usarla como nombre de carpeta de primer nivel en el
+ * storage de adjuntos (`DOCUMENTS_STORAGE_PATH/<cedula>/<respuestaId>/...`)
+ * -- solo alfanumérico y guion. La cédula viene de la sesión firmada por el
+ * servidor (no de un input directo del request), pero se sanea igual como
+ * defensa en profundidad y para que el nombre de carpeta sea siempre legible
+ * en disco.
+ */
+export function sanitizeCedulaParaCarpeta(cedula: string): string {
+  const limpio = cedula.replace(CEDULA_INVALID, '');
+  return limpio.length > 0 ? limpio : 'sin-cedula';
+}
+
 /**
  * Construye un id de archivo opaco: `<timestamp>-<rand>-<slug>.<ext>`.
  * `rand` sale de crypto.randomBytes (no Math.random) para que el handle no

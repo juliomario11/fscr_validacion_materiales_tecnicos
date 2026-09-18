@@ -138,6 +138,7 @@ export class RespuestasController {
     }
     const adjunto = await this.subirAdjunto.execute({
       empleadoId: empleado.empleadoId,
+      cedula: empleado.cedula,
       materialId,
       buffer: file.buffer,
       nombreOriginal: file.originalname,

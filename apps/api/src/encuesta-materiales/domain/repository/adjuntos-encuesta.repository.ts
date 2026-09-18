@@ -11,7 +11,7 @@ export interface CrearAdjuntoPayload {
 }
 
 export interface AdjuntosEncuestaRepository {
-  /** Registra la metadata en `encuesta_adjuntos` -- el binario ya fue subido al bucket por `AdjuntosStoragePort` antes de llamar aquí. */
+  /** Registra la metadata en `encuesta_adjuntos` -- el binario ya fue escrito en el disco del servidor por `AdjuntosStoragePort` antes de llamar aquí. */
   create(payload: CrearAdjuntoPayload): Promise<AdjuntoEncuesta>;
   findById(id: number): Promise<AdjuntoEncuesta | null>;
   /** Usado para aplicar el límite máximo de adjuntos por respuesta antes de subir uno nuevo. */

@@ -24,6 +24,7 @@ export const MAX_ADJUNTOS_POR_RESPUESTA = 5;
 
 export interface SubirAdjuntoInput {
   empleadoId: number;
+  cedula: string;
   materialId: number;
   buffer: Buffer;
   nombreOriginal: string;
@@ -62,7 +63,7 @@ export class SubirAdjuntoUseCase {
       throw new LimiteAdjuntosExcedidoException();
     }
 
-    const subido = await this.storage.subir(input.empleadoId, respuesta.id, {
+    const subido = await this.storage.subir(input.cedula, respuesta.id, {
       buffer: input.buffer,
       nombreOriginal: input.nombreOriginal,
       mimeType: input.mimeType,

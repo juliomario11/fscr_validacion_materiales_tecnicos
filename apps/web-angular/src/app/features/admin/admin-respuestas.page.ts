@@ -6,6 +6,7 @@ import { AdminRespuesta } from '../../shared/models/admin-respuesta';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import { AdminRespuestasService } from '../../shared/services/admin-respuestas.service';
 import { XlsxExportService } from '../../shared/services/xlsx-export.service';
+import { formatFechaCorta } from '../../shared/utils/formato-fecha';
 
 @Component({
   selector: 'app-admin-respuestas-page',
@@ -51,8 +52,8 @@ export class AdminRespuestasPage implements OnInit {
         { header: 'Observaciones', value: (fila) => fila.observaciones },
         { header: 'Estado', value: (fila) => (fila.estado === 'confirmado' ? 'Confirmado' : 'Borrador') },
         { header: 'Adjuntos', value: (fila) => fila.cantidadAdjuntos },
-        { header: 'Fecha inicio', value: (fila) => fila.fechaInicio },
-        { header: 'Fecha confirmación', value: (fila) => fila.fechaConfirmacion },
+        { header: 'Fecha inicio', value: (fila) => formatFechaCorta(fila.fechaInicio) },
+        { header: 'Fecha confirmación', value: (fila) => formatFechaCorta(fila.fechaConfirmacion) },
       ],
       rows: this.respuestas(),
     });
