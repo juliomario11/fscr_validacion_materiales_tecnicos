@@ -56,6 +56,19 @@ export class RespuestasService {
       .pipe(tap((adjunto) => this.agregarAdjuntoLocal(materialId, adjunto)));
   }
 
+  /**
+   * Trae el binario de un adjunto ya subido (`GET /mis-respuestas/adjuntos/:id/file`)
+   * como blob, para vista previa (`URL.createObjectURL`) o descarga forzada
+   * (`<a download>`) -- el backend responde el `Content-Type` real y requiere
+   * la misma cookie de sesión que el resto (la agrega `authInterceptor`).
+   */
+  public descargarAdjunto(adjuntoId: number): Observable<Blob> {
+    return this.http.get(`${environment.apiBaseUrl}/mis-respuestas/adjuntos/${adjuntoId}/file`, {
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
+
   public eliminarRespuesta(materialId: number): Observable<void> {
     return this.http
       .delete<void>(`${environment.apiBaseUrl}/mis-respuestas/${materialId}`)

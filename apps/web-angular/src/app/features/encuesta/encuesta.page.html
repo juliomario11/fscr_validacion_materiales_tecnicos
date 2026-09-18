@@ -3,7 +3,12 @@
     <div>
       <h1>Encuesta de materiales y herramientas</h1>
       @if (auth.user(); as usuario) {
-        <p>Hola, <strong>{{ usuario.nombre }}</strong> (cédula {{ usuario.cedula }})</p>
+        <p>
+          Hola, <strong>{{ usuario.nombreCompleto }}</strong> (cédula {{ usuario.cedula }})
+          @if (metaEmpleado(); as meta) {
+            <span class="encuesta__meta"> — {{ meta }}</span>
+          }
+        </p>
       }
     </div>
     <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
@@ -88,14 +93,6 @@
             ></textarea>
           </label>
 
-          <label class="field">
-            <span>Adjuntar foto/soporte (opcional)</span>
-            <input type="file" accept="image/*,.pdf" (change)="onArchivoSeleccionado($event)" />
-          </label>
-          @if (archivo(); as archivoSeleccionado) {
-            <p class="encuesta__archivo">Archivo seleccionado: {{ archivoSeleccionado.name }}</p>
-          }
-
           @if (errorGuardado()) {
             <p class="alert alert--danger" role="alert">{{ errorGuardado() }}</p>
           }
@@ -107,10 +104,72 @@
               [disabled]="!cantidad() || cantidad()! <= 0 || guardando()"
               (click)="agregarAMiLista()"
             >
-              {{ guardando() ? 'Guardando...' : 'Agregar a mi lista' }}
+              {{ guardando() ? 'Guardando...' : (respuestaSeleccionada() ? 'Guardar cambios' : 'Agregar a mi lista') }}
             </button>
-            <button class="btn btn--ghost" type="button" (click)="limpiarSeleccion()">Cancelar</button>
+            <button class="btn btn--ghost" type="button" (click)="limpiarSeleccion()">Cerrar</button>
           </div>
+
+          @if (respuestaSeleccionada(); as respuesta) {
+            <div class="encuesta__evidencias">
+              <h3>Evidencias adjuntas</h3>
+
+              @if (respuesta.adjuntos?.length) {
+                <ul class="encuesta__adjuntos-lista">
+                  @for (adjunto of respuesta.adjuntos; track adjunto.id) {
+                    <li class="encuesta__adjunto-item">
+                      <span class="encuesta__adjunto-nombre">
+                        {{ adjunto.nombreArchivo }}
+                        <small>{{ adjunto.subidoEn | date: 'short' }}</small>
+                      </span>
+                      <span class="encuesta__adjunto-acciones">
+                        <button
+                          class="btn btn--ghost"
+                          type="button"
+                          [disabled]="procesandoAdjuntoId() === adjunto.id"
+                          (click)="verAdjunto(adjunto)"
+                        >
+                          Ver
+                        </button>
+                        <button
+                          class="btn btn--ghost"
+                          type="button"
+                          [disabled]="procesandoAdjuntoId() === adjunto.id"
+                          (click)="descargarAdjunto(adjunto)"
+                        >
+                          Descargar
+                        </button>
+                      </span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="encuesta__sin-adjuntos">Todavía no has adjuntado evidencia para este material.</p>
+              }
+
+              <label class="field">
+                <span>Adjuntar otra evidencia (foto o PDF)</span>
+                <input #archivoInput type="file" accept="image/*,.pdf" (change)="onArchivoSeleccionado($event)" />
+              </label>
+              @if (archivo(); as archivoSeleccionado) {
+                <p class="encuesta__archivo">Archivo seleccionado: {{ archivoSeleccionado.name }}</p>
+              }
+
+              @if (errorAdjunto()) {
+                <p class="alert alert--danger" role="alert">{{ errorAdjunto() }}</p>
+              }
+
+              <button
+                class="btn btn--ghost"
+                type="button"
+                [disabled]="!archivo() || subiendoAdjunto()"
+                (click)="subirAdjuntoActual(archivoInput)"
+              >
+                {{ subiendoAdjunto() ? 'Subiendo...' : 'Adjuntar otra evidencia' }}
+              </button>
+            </div>
+          } @else {
+            <p class="encuesta__sin-adjuntos">Guarda la cantidad primero para poder adjuntar evidencias.</p>
+          }
         } @else {
           <p>Selecciona un material de la lista para registrar la cantidad que tienes.</p>
         }
@@ -143,11 +202,34 @@
                   @if (respuesta.adjuntos?.length) {
                     <ul class="encuesta__adjuntos">
                       @for (adjunto of respuesta.adjuntos; track adjunto.id) {
-                        <li>{{ adjunto.nombreArchivo }} ({{ adjunto.subidoEn | date: 'short' }})</li>
+                        <li class="encuesta__adjunto-item">
+                          <span class="encuesta__adjunto-nombre">
+                            {{ adjunto.nombreArchivo }}
+                            <small>{{ adjunto.subidoEn | date: 'short' }}</small>
+                          </span>
+                          <span class="encuesta__adjunto-acciones">
+                            <button
+                              class="btn btn--ghost"
+                              type="button"
+                              [disabled]="procesandoAdjuntoId() === adjunto.id"
+                              (click)="verAdjunto(adjunto)"
+                            >
+                              Ver
+                            </button>
+                            <button
+                              class="btn btn--ghost"
+                              type="button"
+                              [disabled]="procesandoAdjuntoId() === adjunto.id"
+                              (click)="descargarAdjunto(adjunto)"
+                            >
+                              Descargar
+                            </button>
+                          </span>
+                        </li>
                       }
                     </ul>
                   } @else {
-                    No
+                    Sin adjuntos
                   }
                 </td>
                 <td class="encuesta__fila-acciones">
@@ -173,5 +255,23 @@
         </button>
       </div>
     </section>
+  }
+
+  @if (previewUrl(); as url) {
+    <div class="preview-overlay" (click)="cerrarPreview()">
+      <div class="preview-modal" (click)="$event.stopPropagation()">
+        <header class="preview-modal__header">
+          <span>{{ previewNombre() }}</span>
+          <button class="btn btn--ghost" type="button" (click)="cerrarPreview()">Cerrar</button>
+        </header>
+        <div class="preview-modal__body">
+          @if (previewTipo() === 'imagen') {
+            <img [src]="url" [alt]="previewNombre() ?? 'Vista previa del adjunto'" />
+          } @else if (previewTipo() === 'pdf') {
+            <iframe [src]="previewSafeUrl()" title="Vista previa del PDF"></iframe>
+          }
+        </div>
+      </div>
+    </div>
   }
 </main>

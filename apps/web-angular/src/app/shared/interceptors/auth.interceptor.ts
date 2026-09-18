@@ -12,8 +12,15 @@ import { AuthService } from '../services/auth.service';
  * - Si el backend responde 401 (cookie ausente/expirada/inválida), limpia el
  *   estado local de sesión y manda al usuario a /login, sin importar en qué
  *   pantalla estaba.
+ * - Ignora por completo las URLs `/admin/*`: ese panel usa un sistema de auth
+ *   aparte (Bearer token, ver `admin-auth.interceptor.ts`) y si este
+ *   interceptor también actuara sobre ellas, un 401 del panel admin
+ *   terminaría limpiando por error la sesión del empleado y mandándolo a
+ *   /login en vez de /admin/login.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  if (request.url.includes('/admin/')) return next(request);
+
   const auth = inject(AuthService);
   const router = inject(Router);
 

@@ -1,0 +1,59 @@
+.admin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: grid;
+  gap: 20px;
+}
+
+.admin__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin__header h1 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.admin__nav {
+  display: flex;
+  gap: 14px;
+}
+
+.admin__nav-link {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.admin__nav-link:hover {
+  color: var(--brand);
+}
+
+.admin__nav-link--activo {
+  color: var(--brand);
+}
+
+.admin__tabla {
+  display: grid;
+  gap: 14px;
+}
+
+.admin__tabla h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.badge--estado-borrador {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.badge--estado-confirmado {
+  background: #e3f9e5;
+  color: var(--success);
+}

@@ -1,0 +1,64 @@
+<main class="admin">
+  <header class="admin__header">
+    <div>
+      <h1>Panel de administración</h1>
+      <nav class="admin__nav">
+        <a routerLink="/admin/empleados" class="admin__nav-link admin__nav-link--activo">Empleados</a>
+        <a routerLink="/admin/respuestas" class="admin__nav-link">Respuestas</a>
+      </nav>
+    </div>
+    <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  </header>
+
+  @if (errorCarga()) {
+    <p class="alert alert--danger" role="alert">{{ errorCarga() }}</p>
+  }
+
+  @if (cargando()) {
+    <p>Cargando empleados...</p>
+  } @else {
+    <section class="card admin__tabla">
+      <div class="admin__tabla-acciones">
+        <h2>Empleados ({{ empleados().length }})</h2>
+        <button class="btn btn--primary" type="button" (click)="exportar()">Exportar a Excel</button>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Cédula</th>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Departamento</th>
+            <th>Proyecto</th>
+            <th>Estado</th>
+            <th>Ítems</th>
+            <th>Fecha confirmación</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (empleado of empleados(); track empleado.id) {
+            <tr>
+              <td>{{ empleado.cedula }}</td>
+              <td>{{ empleado.nombreCompleto }}</td>
+              <td>{{ empleado.cargo || '—' }}</td>
+              <td>{{ empleado.departamento || '—' }}</td>
+              <td>{{ empleado.proyecto || '—' }}</td>
+              <td>
+                <span class="badge" [class]="'badge--estado-' + empleado.estado">
+                  {{ estadoLabel(empleado.estado) }}
+                </span>
+              </td>
+              <td>{{ empleado.cantidadItems }}</td>
+              <td>{{ empleado.fechaConfirmacion ? (empleado.fechaConfirmacion | date: 'short') : '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8">No hay empleados registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</main>

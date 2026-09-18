@@ -2,7 +2,7 @@
   <section class="card gracias__card">
     <h1>¡Gracias por responder la encuesta!</h1>
     @if (auth.user(); as usuario) {
-      <p>{{ usuario.nombre }}, tu respuesta quedó registrada correctamente.</p>
+      <p>{{ usuario.nombreCompleto }}, tu respuesta quedó registrada correctamente.</p>
     } @else {
       <p>Tu respuesta quedó registrada correctamente.</p>
     }

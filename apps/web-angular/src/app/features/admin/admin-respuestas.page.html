@@ -1,0 +1,61 @@
+<main class="admin">
+  <header class="admin__header">
+    <div>
+      <h1>Panel de administración</h1>
+      <nav class="admin__nav">
+        <a routerLink="/admin/empleados" class="admin__nav-link">Empleados</a>
+        <a routerLink="/admin/respuestas" class="admin__nav-link admin__nav-link--activo">Respuestas</a>
+      </nav>
+    </div>
+    <button class="btn btn--ghost" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  </header>
+
+  @if (errorCarga()) {
+    <p class="alert alert--danger" role="alert">{{ errorCarga() }}</p>
+  }
+
+  @if (cargando()) {
+    <p>Cargando respuestas...</p>
+  } @else {
+    <section class="card admin__tabla">
+      <h2>Respuestas ({{ respuestas().length }})</h2>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Material</th>
+            <th>Cantidad</th>
+            <th>Observaciones</th>
+            <th>Estado</th>
+            <th>Adjuntos</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (respuesta of respuestas(); track respuesta.empleado.id + '-' + respuesta.material.codigo) {
+            <tr>
+              <td>{{ respuesta.empleado.nombreCompleto }} ({{ respuesta.empleado.cedula }})</td>
+              <td>[{{ respuesta.material.codigo }}] {{ respuesta.material.descripcion }}</td>
+              <td>{{ respuesta.cantidad }} {{ respuesta.material.unidadMedida }}</td>
+              <td>{{ respuesta.observaciones || '—' }}</td>
+              <td>
+                <span class="badge" [class]="'badge--estado-' + respuesta.estado">
+                  {{ respuesta.estado === 'confirmado' ? 'Confirmado' : 'Borrador' }}
+                </span>
+              </td>
+              <td>{{ respuesta.cantidadAdjuntos }}</td>
+              <td>
+                {{ (respuesta.fechaConfirmacion || respuesta.fechaInicio) | date: 'short' }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7">No hay respuestas registradas.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</main>
